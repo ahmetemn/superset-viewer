@@ -622,6 +622,55 @@
                 console.warn('⚠️ HTTP URL HTTPS\'e çevrildi:', url);
             }
             
+            // Önce fetch ile redirect'i kontrol et ve Location header'ını HTTPS'e çevir
+            fetch(url, {
+                method: 'HEAD',
+                credentials: 'include',
+                mode: 'cors',
+                redirect: 'manual' // Redirect'i manuel handle et
+            }).then(response => {
+                if (response.status === 302 || response.status === 301) {
+                    const location = response.headers.get('Location');
+                    if (location) {
+                        // Relative URL ise absolute URL'e çevir
+                        let redirectUrl = location;
+                        if (location.startsWith('/')) {
+                            const urlObj = new URL(url);
+                            redirectUrl = urlObj.origin + location;
+                        }
+                        
+                        // HTTP ise HTTPS'e çevir
+                        if (redirectUrl.startsWith('http://')) {
+                            redirectUrl = redirectUrl.replace('http://', 'https://');
+                            console.warn('⚠️ Redirect Location HTTP! HTTPS\'e çevrildi:', redirectUrl);
+                        }
+                        
+                        // Iframe'i HTTPS URL ile yükle
+                        loadIframeWithUrl(redirectUrl, title, iframe);
+                        return;
+                    }
+                } else if (response.status === 200) {
+                    // Doğrudan yükleme yapılabilir
+                    loadIframeWithUrl(url, title, iframe);
+                    return;
+                }
+                
+                // Diğer durumlarda normal yükleme
+                loadIframeWithUrl(url, title, iframe);
+            }).catch(error => {
+                console.error('Redirect check error:', error);
+                // Hata durumunda normal yükleme
+                loadIframeWithUrl(url, title, iframe);
+            });
+        }
+        
+        function loadIframeWithUrl(url, title, iframe) {
+            // URL'yi HTTPS'e çevir
+            if (url.startsWith('http://')) {
+                url = url.replace('http://', 'https://');
+                console.warn('⚠️ HTTP URL HTTPS\'e çevrildi:', url);
+            }
+            
             // Cookie kontrolü ve debug bilgisi
             console.log('Loading URL:', url);
             console.log('Cookies:', document.cookie);
@@ -662,7 +711,9 @@
                             // HTTP URL kontrolü
                             if (currentUrl.startsWith('http://')) {
                                 console.error('❌ Mixed Content Hatası! HTTP URL algılandı:', currentUrl);
-                                alert('⚠️ Mixed Content Hatası!\n\nSuperset URL\'i HTTPS ile başlamalı!\n\nLütfen Superset URL\'ini kontrol edin:\nhttps://devowlex.experilabs.online\n\nHTTP URL\'ler HTTPS sayfalarda çalışmaz!');
+                                const httpsUrl = currentUrl.replace('http://', 'https://');
+                                console.warn('⚠️ HTTP URL HTTPS\'e çevriliyor:', httpsUrl);
+                                iframe.src = httpsUrl;
                                 return;
                             }
                             
