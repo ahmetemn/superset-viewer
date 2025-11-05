@@ -297,60 +297,10 @@
         <div class="controls">
             <div class="info-box">
                 
-                <strong>⚠️ ÖNEMLİ - Cookie Domain Sorunu:</strong>
-                <ul>
-                    <li>❌ <strong>localStorage'daki cookie çalışmaz!</strong> Cookie Owlex domain'inde olmalı</li>
-                    <li>✅ <strong>Cookie'nin Owlex domain'inde olması gerekir:</strong> <code>https://devowlex.experilabs.online</code></li>
-                    <li>Iframe içinde Owlex'e istek gönderilirken cookie <strong>Owlex domain'inden</strong> gönderilir</li>
-                    <li>localStorage'daki cookie Owlex domain'ine gönderilmez!</li>
-                </ul>
-                <br>
-                <strong>✅ ÇÖZÜM (Tek Yol):</strong>
-                <ol>
-                    <li>Yeni sekmede <strong>https://devowlex.experilabs.online</strong> açın</li>
-                    <li><strong>Normal şekilde giriş yapın</strong></li>
-                    <li>Cookie <strong>otomatik olarak Owlex domain'inde</strong> oluşur</li>
-                    <li>Bu Netlify sayfasına geri dönün</li>
-                    <li>Dashboard yükleyin → Cookie otomatik gönderilir ✅</li>
-                </ol>
-                <br>
-                <strong>❌ ÇALIŞMAYAN YÖNTEMLER:</strong>
-                <ul>
-                    <li>Manuel cookie girişi → localStorage'a kaydedilir ama Owlex domain'inde değil</li>
-                    <li>Cross-origin cookie ayarlama → Tarayıcı güvenlik politikaları nedeniyle çalışmaz</li>
-                </ul>
-                <br>
-                <strong>🔍 302 Redirect Hatası İçin Network Tab Kontrolü:</strong>
-                <ol>
-                    <li>F12 > <strong>Network</strong> tab'ini açın</li>
-                    <li>Dashboard URL'ini yükleyin</li>
-                    <li>302 request'ini bulun</li>
-                    <li><strong>Request Headers</strong> sekmesine gidin</li>
-                    <li><strong>Cookie:</strong> header'ını kontrol edin:
-                        <ul>
-                            <li>❌ <strong>YOKSA</strong> → Cookie gönderilmiyor (SameSite sorunu olabilir)</li>
-                            <li>✅ <strong>VARSA</strong> → Cookie gönderiliyor ama geçersiz/expire olmuş</li>
-                        </ul>
-                    </li>
-                </ol>
-                <br>
-                <strong>✅ Çözüm:</strong>
-                <ol>
-                    <li>Yeni sekmede <strong>https://devowlex.experilabs.online</strong> açın</li>
-                    <li><strong>Giriş yapın</strong> ve <strong>ana sayfaya gidin</strong> (cookie otomatik oluşur)</li>
-                    <li>Cookie'nin <strong>SameSite=None</strong> olduğunu kontrol edin</li>
-                    <li>Bu Netlify sayfasına geri dönün ve tekrar deneyin</li>
-                    <li>Cookie otomatik olarak iframe içinde gönderilecektir</li>
-                </ol>
-                <br>
-                <strong>🔧 Owlex Config Kontrolü (Config Dosyanızda Mevcut ✅):</strong>
-                <ul>
-                    <li>✅ <code>OVERRIDE_HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}</code></li>
-                    <li>✅ <code>SESSION_COOKIE_SAMESITE = "None"</code></li>
-                    <li>✅ <code>SESSION_COOKIE_SECURE = True</code></li>
-                    <li>✅ <code>ENABLE_CORS = True</code> ve <code>supports_credentials: True</code></li>
-                    <li>✅ <code>ALLOW_DASHBOARD_DOMAIN_SHARING: True</code></li>
-                </ul>
+               
+                
+                
+         
                 <br>
                 <strong>🔍 302 Redirect Sorunu - Debug Adımları:</strong>
                 <ol>
@@ -606,43 +556,9 @@
                 console.warn('⚠️ HTTP URL HTTPS\'e çevrildi:', url);
             }
             
-            // Önce HEAD request ile redirect'i kontrol et (ama Mixed Content hatası olabilir)
-            // Eğer redirect varsa Location header'ını HTTPS'e çevir
-            fetch(url, {
-                method: 'HEAD',
-                credentials: 'include',
-                mode: 'cors',
-                redirect: 'manual' // Redirect'i manuel handle et
-            }).then(response => {
-                let finalUrl = url;
-                
-                if (response.status === 302 || response.status === 301) {
-                    const location = response.headers.get('Location');
-                    if (location) {
-                        // Relative URL ise absolute URL'e çevir
-                        let redirectUrl = location;
-                        if (location.startsWith('/')) {
-                            const urlObj = new URL(url);
-                            redirectUrl = urlObj.origin + location;
-                        }
-                        
-                        // HTTP ise HTTPS'e çevir
-                        if (redirectUrl.startsWith('http://')) {
-                            redirectUrl = redirectUrl.replace('http://', 'https://');
-                            console.warn('⚠️ Redirect Location HTTP! HTTPS\'e çevrildi:', redirectUrl);
-                        }
-                        
-                        finalUrl = redirectUrl;
-                    }
-                }
-                
-                // Iframe'i HTTPS URL ile yükle
-                loadIframeWithUrl(finalUrl, title, iframe);
-            }).catch(error => {
-                // Mixed Content hatası veya başka bir hata - direkt yükle
-                console.warn('Redirect check failed (normal):', error.message);
-                loadIframeWithUrl(url, title, iframe);
-            });
+            // Direkt iframe'e yükle (fetch Mixed Content hatası veriyor)
+            // Iframe içinde HTTP redirect olursa onload event'inde yakalanıp HTTPS'e çevrilecek
+            loadIframeWithUrl(url, title, iframe);
         }
         
         function loadIframeWithUrl(url, title, iframe) {
@@ -704,6 +620,18 @@
                                 return;
                             }
                             
+                            // Eğer /home sayfasına yönlendirilmişse (HTTP redirect sonucu)
+                            if (currentUrl.includes('/home') && !currentUrl.includes('/superset/dashboard')) {
+                                console.warn('⚠️ /home sayfasına yönlendirildi - Cookie sorunu olabilir');
+                                // URL'yi HTTPS'e çevir ve tekrar dene
+                                if (currentUrl.startsWith('http://')) {
+                                    const httpsUrl = currentUrl.replace('http://', 'https://');
+                                    console.warn('⚠️ HTTP URL HTTPS\'e çevriliyor:', httpsUrl);
+                                    iframe.src = httpsUrl;
+                                    return;
+                                }
+                            }
+                            
                             // Eğer login sayfasına yönlendirilmişse
                             if (currentUrl.includes('/login') || currentUrl.includes('/auth')) {
                                 console.warn('302 Redirect detected - Authentication required');
@@ -741,6 +669,11 @@ EĞER COOKIE HEADER VARSA:
                         } catch (e) {
                             // Cross-origin hatası normaldir
                             console.log('Cross-origin check (normal):', e.message);
+                            // Mixed Content hatası olabilir, kontrol et
+                            if (e.message.includes('Blocked') || e.message.includes('Mixed')) {
+                                console.error('❌ Mixed Content hatası algılandı!');
+                                console.warn('ÇÖZÜM: Owlex backend\'inde redirect HTTPS olmalı');
+                            }
                         }
                     }, 2000);
                 } catch (e) {
