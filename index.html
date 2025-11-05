@@ -580,9 +580,9 @@
                 if (shortId.includes('/r/')) {
                     shortId = shortId.split('/r/')[1];
                 }
-                url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
+                url = `${baseUrl}/?r=${shortId}&standalone=1&embedded=true&height=800`;
             } else if (chartId) {
-                url = `${baseUrl}/superset/explore/?slice_id=${chartId}&standalone=1&height=800`;
+                url = `${baseUrl}/superset/explore/?slice_id=${chartId}&standalone=1&embedded=true&height=800`;
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
                 return;
@@ -602,7 +602,7 @@
                 return;
             }
 
-            const url = `${baseUrl}/superset/dashboard/${dashboardId}/?standalone=1`;
+            const url = `${baseUrl}/superset/dashboard/${dashboardId}/?standalone=1&embedded=true`;
             showContent(url, `Dashboard ${dashboardId}`);
         }
 
