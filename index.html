@@ -382,6 +382,20 @@
                 >
             </div>
 
+            <div class="control-group">
+                <label for="sessionCookie">Session Cookie (Manuel Giriş)</label>
+                <input 
+                    type="text" 
+                    id="sessionCookie" 
+                    placeholder="Session cookie değerini buraya yapıştırın..."
+                    style="font-family: monospace; font-size: 0.9em;"
+                >
+                <button class="btn btn-secondary" onclick="setSessionCookie()" style="margin-top: 10px; width: auto; padding: 8px 20px;">Cookie'yi Ayarla</button>
+                <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 0.85em;">
+                    F12 > Application > Cookies > https://devowlex.experilabs.online > session cookie'sinin Value değerini kopyalayıp buraya yapıştırın
+                </small>
+            </div>
+
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('chart')">📈 Chart</button>
                 <button class="tab" onclick="switchTab('dashboard')">📊 Dashboard</button>
@@ -476,6 +490,46 @@
             }
         }
 
+        function setSessionCookie() {
+            const sessionValue = document.getElementById('sessionCookie').value.trim();
+            if (!sessionValue) {
+                alert('Lütfen session cookie değerini girin!');
+                return;
+            }
+
+            const baseUrl = getSupersetUrl();
+            if (!baseUrl) {
+                alert('Lütfen önce Superset sunucu URL\'sini girin!');
+                return;
+            }
+
+            try {
+                const urlObj = new URL(baseUrl);
+                const domain = urlObj.hostname;
+
+                // Cookie'yi ayarla (cross-origin için)
+                const expires = new Date();
+                expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000)); // 24 saat
+
+                // Cookie'yi localStorage'a kaydet (iframe'de kullanmak için)
+                localStorage.setItem('superset_session', sessionValue);
+                localStorage.setItem('superset_url', baseUrl);
+                localStorage.setItem('superset_domain', domain);
+
+                // Cross-origin cookie ayarlama denemesi (tarayıcı güvenlik politikaları nedeniyle çalışmayabilir)
+                try {
+                    document.cookie = `session=${sessionValue}; expires=${expires.toUTCString()}; path=/; SameSite=None; Secure`;
+                } catch (e) {
+                    console.log('Cookie ayarlama hatası (normal):', e.message);
+                }
+
+                alert('✅ Session cookie kaydedildi!\n\nCookie localStorage\'a kaydedildi ve iframe\'de kullanılacak.\n\nNot: Cross-origin cookie ayarlama tarayıcı güvenlik politikaları nedeniyle sınırlı olabilir. Eğer çalışmazsa, Superset\'e normal şekilde giriş yapın.');
+            } catch (error) {
+                console.error('Cookie ayarlama hatası:', error);
+                alert('❌ Cookie ayarlanırken hata oluştu.');
+            }
+        }
+
         function getSupersetUrl() {
             let url = document.getElementById('supersetUrl').value.trim();
             if (!url) {
@@ -539,6 +593,17 @@
             console.log('Loading URL:', url);
             console.log('Cookies:', document.cookie);
             
+            // localStorage'dan cookie'yi al
+            const savedSession = localStorage.getItem('superset_session');
+            const savedDomain = localStorage.getItem('superset_domain');
+            
+            if (savedSession) {
+                console.log('Saved session cookie found in localStorage');
+                // Cookie'yi URL'ye ekle (Superset bunu destekliyorsa)
+                // Not: Bu çalışmayabilir çünkü Superset cookie'yi header'dan bekler
+                // Ancak bazı durumlarda URL parametresi olarak da çalışabilir
+            }
+            
             // Cookie gönderimini test et
             checkCookieSupport(url);
             
@@ -555,7 +620,12 @@
                             // Eğer login sayfasına yönlendirilmişse
                             if (currentUrl.includes('/login') || currentUrl.includes('/auth')) {
                                 console.warn('302 Redirect detected - Authentication required');
-                                alert('⚠️ Oturum Gerekli!\n\nSuperset sunucusuna giriş yapmanız gerekiyor.\n\n1. Yeni bir sekmede Superset sunucusunu açın: ' + url.split('/superset')[0] + '\n2. Giriş yapın\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nCookie\'ler otomatik olarak gönderilecektir.');
+                                
+                                if (savedSession) {
+                                    alert('⚠️ Oturum Gerekli!\n\nCookie localStorage\'da var ama iframe\'e gönderilmiyor.\n\nÇözüm:\n1. Yeni sekmede Superset sunucusunu açın: ' + url.split('/superset')[0] + '\n2. Giriş yapın (cookie otomatik oluşur)\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nCookie\'ler otomatik olarak gönderilecektir.');
+                                } else {
+                                    alert('⚠️ Oturum Gerekli!\n\nSuperset sunucusuna giriş yapmanız gerekiyor.\n\n1. Yeni bir sekmede Superset sunucusunu açın: ' + url.split('/superset')[0] + '\n2. Giriş yapın\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nVEYA\n\nSession cookie\'sini manuel olarak girin (yukarıdaki alan).');
+                                }
                             }
                         } catch (e) {
                             // Cross-origin hatası normaldir
@@ -625,7 +695,14 @@
             document.getElementById('viewerTitle').textContent = 'İçerik Burada Görünecek';
         }
 
+        // Sayfa yüklendiğinde localStorage'dan cookie'yi kontrol et
         document.addEventListener('DOMContentLoaded', function() {
+            const savedSession = localStorage.getItem('superset_session');
+            if (savedSession) {
+                document.getElementById('sessionCookie').value = savedSession;
+                console.log('Saved session cookie loaded from localStorage');
+            }
+            
             const urlInput = document.getElementById('supersetUrl');
             if (urlInput) {
                 urlInput.addEventListener('blur', function() {
