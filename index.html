@@ -506,7 +506,23 @@
                 return;
             }
 
+            // URL'yi oluştur ve console'da göster
             const url = `${baseUrl}/main/dashboard/${dashboardId}/?standalone=1&native_filters=%28%29`;
+            console.log('🔗 Dashboard URL:', url);
+            console.log('📋 URL Format Kontrolü:');
+            console.log('  - Base URL:', baseUrl);
+            console.log('  - Path: /main/dashboard/');
+            console.log('  - Dashboard ID:', dashboardId);
+            console.log('  - Parameters: standalone=1&native_filters=%28%29');
+            
+            // Cookie kontrolü
+            console.log('🍪 Cookie Kontrolü:');
+            console.log('  - Current domain:', window.location.hostname);
+            console.log('  - Owlex domain:', new URL(baseUrl).hostname);
+            console.log('  - Cookies in current domain:', document.cookie || '(none)');
+            console.log('  - ⚠️ ÖNEMLİ: Cookie\'nin Owlex domain\'inde olması gerekir!');
+            console.log('  - F12 > Application > Cookies > https://devowlex.experilabs.online > session cookie kontrol edin');
+            
             showContent(url, `Dashboard ${dashboardId}`);
         }
 
@@ -598,37 +614,78 @@
                                 }
                             }
                             
-                            // Eğer login sayfasına yönlendirilmişse
-                            if (currentUrl.includes('/login') || currentUrl.includes('/auth')) {
-                                console.warn('302 Redirect detected - Authentication required');
+                            // Eğer login sayfasına yönlendirilmişse veya /home'a yönlendirilmişse
+                            if (currentUrl.includes('/login') || currentUrl.includes('/auth') || 
+                                (currentUrl.includes('/home') && !currentUrl.includes('/dashboard'))) {
+                                console.error('❌ 302 Redirect detected - Authentication required');
+                                console.error('Redirected to:', currentUrl);
+                                console.error('Original URL:', url);
+                                
+                                // Cookie kontrolü için detaylı bilgi
+                                const baseUrl = url.split('/main')[0] || url.split('/superset')[0] || getOwlexUrl();
+                                console.log('🔍 302 HATA ANALİZİ:');
+                                console.log('1. F12 > Network tab\'ini açın');
+                                console.log('2. Request\'i bulun (302 FOUND)');
+                                console.log('3. Request Headers\'da Cookie header\'ını kontrol edin');
+                                console.log('4. Eğer Cookie header YOKSA → SameSite sorunu olabilir');
+                                console.log('5. F12 > Application > Cookies > ' + baseUrl);
+                                console.log('6. session cookie\'sinin SameSite=None olduğundan emin olun');
                                 
                                 // Detaylı hata mesajı
                                 const errorMsg = `
 ⚠️ 302 REDIRECT HATASI
 
-Cookie gönderilmiyor veya geçersiz!
+Link doğrudan açılıyor ama iframe içinde çalışmıyor!
+
+SORUN: Cookie iframe'e gönderilmiyor
 
 KONTROL ADIMLARI:
 1. F12 > Network tab'ini açın
-2. Dashboard request'ini bulun (302 olan)
+2. Dashboard request'ini bulun (302 FOUND)
 3. Request Headers sekmesine gidin
-4. "Cookie:" header'ının olup olmadığını kontrol edin
+4. "Cookie:" header'ını kontrol edin
 
 EĞER COOKIE HEADER YOKSA:
-→ Cookie gönderilmiyor demektir
-→ Owlex'e normal şekilde giriş yapın
-→ Cookie otomatik oluşur ve iframe'e gönderilir
+→ Cookie SameSite sorunu olabilir
+→ F12 > Application > Cookies > ${baseUrl}
+→ session cookie'nin SameSite=None olduğundan emin olun
 
 EĞER COOKIE HEADER VARSA:
 → Cookie gönderiliyor ama geçersiz/expire olmuş
 → Owlex'e tekrar giriş yapın
-→ Yeni cookie oluşacaktır
 
 ÇÖZÜM:
-1. Yeni sekmede: ${url.split('/superset')[0]}
-2. Giriş yapın
-3. Bu sayfaya geri dönün ve tekrar deneyin
+1. Yeni sekmede: ${baseUrl}
+2. Giriş yapın (cookie otomatik oluşur)
+3. F12 > Application > Cookies > ${baseUrl}
+4. session cookie'nin SameSite=None olduğundan emin olun
+5. Bu sayfaya geri dönün ve tekrar deneyin
+
+NOT: Owlex backend config'inde şunlar olmalı:
+- SESSION_COOKIE_SAMESITE = "None"
+- SESSION_COOKIE_SECURE = True
                                 `;
+                                
+                                // Status box'ı güncelle
+                                const statusBox = document.getElementById('cookieStatus');
+                                const statusText = document.getElementById('cookieStatusText');
+                                if (statusBox && statusText) {
+                                    statusBox.style.display = 'block';
+                                    statusBox.className = 'warning-box';
+                                    statusText.innerHTML = `
+                                        <strong>❌ 302 Redirect Hatası!</strong><br>
+                                        Link doğrudan açılıyor ama iframe içinde çalışmıyor.<br><br>
+                                        <strong>SORUN:</strong> Cookie iframe'e gönderilmiyor<br><br>
+                                        <strong>ÇÖZÜM:</strong><br>
+                                        1. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3; font-weight: bold;">Owlex'e giriş yapın</a><br>
+                                        2. F12 > Application > Cookies > ${baseUrl}<br>
+                                        3. session cookie'nin <strong>SameSite=None</strong> olduğundan emin olun<br>
+                                        4. Bu sayfaya geri dönün ve tekrar deneyin<br><br>
+                                        <strong>Backend Config Kontrolü:</strong><br>
+                                        - SESSION_COOKIE_SAMESITE = "None"<br>
+                                        - SESSION_COOKIE_SECURE = True
+                                    `;
+                                }
                                 
                                 alert(errorMsg);
                             }
