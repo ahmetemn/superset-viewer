@@ -622,46 +622,8 @@
                 console.warn('⚠️ HTTP URL HTTPS\'e çevrildi:', url);
             }
             
-            // Önce fetch ile redirect'i kontrol et ve Location header'ını HTTPS'e çevir
-            fetch(url, {
-                method: 'HEAD',
-                credentials: 'include',
-                mode: 'cors',
-                redirect: 'manual' // Redirect'i manuel handle et
-            }).then(response => {
-                if (response.status === 302 || response.status === 301) {
-                    const location = response.headers.get('Location');
-                    if (location) {
-                        // Relative URL ise absolute URL'e çevir
-                        let redirectUrl = location;
-                        if (location.startsWith('/')) {
-                            const urlObj = new URL(url);
-                            redirectUrl = urlObj.origin + location;
-                        }
-                        
-                        // HTTP ise HTTPS'e çevir
-                        if (redirectUrl.startsWith('http://')) {
-                            redirectUrl = redirectUrl.replace('http://', 'https://');
-                            console.warn('⚠️ Redirect Location HTTP! HTTPS\'e çevrildi:', redirectUrl);
-                        }
-                        
-                        // Iframe'i HTTPS URL ile yükle
-                        loadIframeWithUrl(redirectUrl, title, iframe);
-                        return;
-                    }
-                } else if (response.status === 200) {
-                    // Doğrudan yükleme yapılabilir
-                    loadIframeWithUrl(url, title, iframe);
-                    return;
-                }
-                
-                // Diğer durumlarda normal yükleme
-                loadIframeWithUrl(url, title, iframe);
-            }).catch(error => {
-                console.error('Redirect check error:', error);
-                // Hata durumunda normal yükleme
-                loadIframeWithUrl(url, title, iframe);
-            });
+            // Direkt iframe'e yükle (fetch Mixed Content hatası veriyor)
+            loadIframeWithUrl(url, title, iframe);
         }
         
         function loadIframeWithUrl(url, title, iframe) {
@@ -695,8 +657,12 @@
             console.log('1. F12 > Application > Cookies > https://devowlex.experilabs.online');
             console.log('2. session cookie\'sinin olduğundan emin olun');
             
-            // Cookie gönderimini test et
-            checkCookieSupport(url);
+            // Cookie gönderimini test et (Mixed Content hatası olabilir, ignore et)
+            try {
+                checkCookieSupport(url);
+            } catch (e) {
+                console.log('Cookie test skipped (Mixed Content):', e.message);
+            }
             
             // Iframe load event listener - hata kontrolü için
             iframe.onload = function() {
@@ -708,11 +674,12 @@
                             const currentUrl = iframe.contentWindow.location.href;
                             console.log('Iframe current URL:', currentUrl);
                             
-                            // HTTP URL kontrolü
+                            // HTTP URL kontrolü - EN ÖNEMLİSİ!
                             if (currentUrl.startsWith('http://')) {
                                 console.error('❌ Mixed Content Hatası! HTTP URL algılandı:', currentUrl);
                                 const httpsUrl = currentUrl.replace('http://', 'https://');
                                 console.warn('⚠️ HTTP URL HTTPS\'e çevriliyor:', httpsUrl);
+                                // Iframe'i HTTPS URL ile yeniden yükle
                                 iframe.src = httpsUrl;
                                 return;
                             }
@@ -761,9 +728,18 @@ EĞER COOKIE HEADER VARSA:
                 }
             };
             
+            // Iframe error handler - Mixed Content hatası için
             iframe.onerror = function() {
                 console.error('Iframe load error');
-                alert('❌ İçerik yüklenirken hata oluştu!\n\nLütfen:\n1. Owlex sunucusuna giriş yaptığınızdan emin olun\n2. URL\'nin HTTPS ile başladığından emin olun (https://)\n3. Browser Console\'u açın (F12) ve Network tab\'inde cookie\'lerin gönderildiğini kontrol edin');
+                // Mixed Content hatası olabilir, tekrar dene
+                setTimeout(() => {
+                    const currentSrc = iframe.src;
+                    if (currentSrc.startsWith('http://')) {
+                        const httpsSrc = currentSrc.replace('http://', 'https://');
+                        console.warn('⚠️ Mixed Content hatası! HTTPS URL ile tekrar deniyor:', httpsSrc);
+                        iframe.src = httpsSrc;
+                    }
+                }, 1000);
             };
             
             // URL'yi ayarla (credentials ile)
