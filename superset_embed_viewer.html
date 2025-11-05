@@ -322,12 +322,14 @@
 
         <div class="controls">
             <div class="info-box">
-                <strong>💡 ÖNEMLİ - Cross-Origin Cookie Sorunu:</strong>
+                <strong>💡 ÖNEMLİ - Bilgiler:</strong>
                 <ul>
                     <li>Bu sayfa Netlify domain'inde (<strong>owlex.netlify.app</strong>)</li>
                     <li>Owlex farklı domain'de (<strong>devowlex.experilabs.online</strong>)</li>
                     <li><strong>Cross-origin cookie gönderimi tarayıcı güvenlik politikaları nedeniyle çalışmaz!</strong></li>
                     <li><strong>ÇÖZÜM:</strong> Owlex'e giriş yapın, cookie otomatik oluşur ve iframe içinde gönderilir</li>
+                    <li><strong>HATA YAKALAMA:</strong> X-Frame-Options ve Mixed Content hataları otomatik yakalanır ve gösterilir</li>
+                    <li><strong>GEÇİCİ ÇÖZÜM:</strong> Hata durumunda içeriği yeni sekmede açabilirsiniz</li>
                 </ul>
             </div>
 
@@ -462,9 +464,26 @@
             const statusBox = document.getElementById('cookieStatus');
             const statusText = document.getElementById('cookieStatusText');
 
+            // URL'nin HTTPS olduğundan emin ol
+            if (!baseUrl.startsWith('https://')) {
+                statusBox.style.display = 'block';
+                statusBox.className = 'warning-box';
+                statusText.innerHTML = `
+                    <strong>⚠️ HTTPS Gerekli!</strong><br>
+                    Owlex URL'si HTTPS ile başlamalıdır. Mixed Content hatası önlemek için HTTPS kullanın.
+                `;
+                return;
+            }
+
             try {
                 // Cookie kontrolü için bir test endpoint'i deneyelim
                 const testUrl = `${baseUrl}/home/`;
+                
+                // URL'nin HTTPS olduğundan emin ol
+                if (!testUrl.startsWith('https://')) {
+                    console.error('❌ Mixed Content hatası önlemek için URL HTTPS olmalı:', testUrl);
+                    return;
+                }
                 
                 // Fetch ile cookie gönderimini test et
                 const response = await fetch(testUrl, {
@@ -500,6 +519,14 @@
                 } else if (response.status === 302 || response.status === 301) {
                     // Redirect - cookie yok veya geçersiz
                     const location = response.headers.get('Location') || '';
+                    
+                    // Location header'ı HTTP ise HTTPS'e çevir
+                    if (location && location.startsWith('http://')) {
+                        console.warn('⚠️ Redirect Location HTTP! HTTPS\'e çevriliyor...');
+                        const httpsLocation = location.replace('http://', 'https://');
+                        console.log('HTTPS Location:', httpsLocation);
+                    }
+                    
                     statusBox.style.display = 'block';
                     statusBox.className = 'warning-box';
                     statusText.innerHTML = `
@@ -514,18 +541,34 @@
                 }
             } catch (error) {
                 console.error('Cookie check error:', error);
-                // CORS hatası beklenir
-                statusBox.style.display = 'block';
-                statusBox.className = 'warning-box';
-                statusText.innerHTML = `
-                    <strong>⚠️ Cross-Origin Cookie Sorunu!</strong><br>
-                    Farklı domain'lerden cookie gönderimi tarayıcı güvenlik politikaları nedeniyle çalışmaz.<br><br>
-                    <strong>ÇÖZÜM:</strong><br>
-                    1. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3;">Owlex'e giriş yapın</a><br>
-                    2. Cookie otomatik olarak Owlex domain'inde oluşur<br>
-                    3. Bu sayfaya geri dönün ve tekrar deneyin<br>
-                    4. Cookie artık Owlex domain'inde olduğu için iframe içinde otomatik gönderilir
-                `;
+                
+                // Mixed Content hatası kontrolü
+                if (error.message && (error.message.includes('Mixed Content') || error.message.includes('insecure'))) {
+                    statusBox.style.display = 'block';
+                    statusBox.className = 'warning-box';
+                    statusText.innerHTML = `
+                        <strong>⚠️ Mixed Content Hatası!</strong><br>
+                        Owlex backend'i HTTP redirect döndürüyor olabilir.<br><br>
+                        <strong>ÇÖZÜM:</strong><br>
+                        1. Owlex config'de <code>SUPERSET_WEBSERVER_PROTOCOL = "https"</code> olmalı<br>
+                        2. Nginx config'inde X-Frame-Options header'ı kaldırılmalı veya değiştirilmeli<br>
+                        3. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3;">Owlex'e giriş yapın</a><br>
+                        4. Cookie artık Owlex domain'inde olduğu için iframe içinde otomatik gönderilir
+                    `;
+                } else {
+                    // CORS hatası beklenir
+                    statusBox.style.display = 'block';
+                    statusBox.className = 'warning-box';
+                    statusText.innerHTML = `
+                        <strong>⚠️ Cross-Origin Cookie Sorunu!</strong><br>
+                        Farklı domain'lerden cookie gönderimi tarayıcı güvenlik politikaları nedeniyle çalışmaz.<br><br>
+                        <strong>ÇÖZÜM:</strong><br>
+                        1. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3;">Owlex'e giriş yapın</a><br>
+                        2. Cookie otomatik olarak Owlex domain'inde oluşur<br>
+                        3. Bu sayfaya geri dönün ve tekrar deneyin<br>
+                        4. Cookie artık Owlex domain'inde olduğu için iframe içinde otomatik gönderilir
+                    `;
+                }
             }
         }
 
@@ -570,6 +613,10 @@
         }
 
         function showContent(url, title) {
+            // Hata flag'lerini resetle (yeni içerik yüklenirken)
+            xFrameOptionsErrorShown = false;
+            mixedContentErrorShown = false;
+            
             document.getElementById('viewerTitle').textContent = title;
             const iframe = document.getElementById('contentFrame');
             
@@ -586,8 +633,32 @@
             // Cookie durumunu kontrol et
             checkCookieStatus();
             
+            // Hata yakalama - X-Frame-Options ve Mixed Content hatalarını yakala
+            let frameErrorDetected = false;
+            const errorTimeout = setTimeout(() => {
+                if (!frameErrorDetected) {
+                    // 3 saniye içinde iframe yüklenmediyse hata olabilir
+                    const container = document.getElementById('iframeContainer');
+                    if (container.style.display !== 'none') {
+                        try {
+                            // Iframe'in içeriğini kontrol et
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                            if (!iframeDoc || iframeDoc.body.innerHTML.trim() === '') {
+                                showXFrameOptionsError(url);
+                            }
+                        } catch (e) {
+                            // Cross-origin hatası normaldir, ama X-Frame-Options hatası olabilir
+                            console.warn('⚠️ X-Frame-Options hatası olabilir:', e.message);
+                            showXFrameOptionsError(url);
+                        }
+                    }
+                }
+            }, 3000);
+            
             // Iframe load event listener
             iframe.onload = function() {
+                frameErrorDetected = true;
+                clearTimeout(errorTimeout);
                 console.log('✅ Iframe loaded');
                 
                 // 302 redirect kontrolü için setTimeout kullan
@@ -618,15 +689,161 @@
             
             // Iframe error handler
             iframe.onerror = function() {
+                frameErrorDetected = true;
+                clearTimeout(errorTimeout);
                 console.error('❌ Iframe load error');
                 show302Error();
             };
+            
+            // Global error listener - X-Frame-Options ve Mixed Content hatalarını yakala
+            const errorHandler = function(event) {
+                const errorMsg = event.message || '';
+                const errorSource = event.filename || '';
+                
+                // X-Frame-Options hatası kontrolü
+                if (errorMsg.includes('X-Frame-Options') || 
+                    errorMsg.includes('frame') && errorMsg.includes('denied') ||
+                    errorMsg.includes('Refused to display') ||
+                    errorMsg.includes('SAMEORIGIN') ||
+                    errorMsg.includes('ALLOWALL')) {
+                    console.error('❌ X-Frame-Options hatası algılandı:', errorMsg);
+                    showXFrameOptionsError(url);
+                }
+                
+                // Mixed Content hatası kontrolü
+                if (errorMsg.includes('Mixed Content') || 
+                    errorMsg.includes('insecure') ||
+                    errorMsg.includes('HTTPS') && errorMsg.includes('HTTP') ||
+                    errorMsg.includes('blocked:mixed-content')) {
+                    console.error('❌ Mixed Content hatası algılandı:', errorMsg);
+                    showMixedContentError(url);
+                }
+            };
+            
+            // Console error'ları yakala (bazı hatalar sadece console'da görünür)
+            const originalConsoleError = console.error;
+            let errorHandled = false; // Recursive çağrıyı önlemek için
+            console.error = function(...args) {
+                originalConsoleError.apply(console, args);
+                
+                if (errorHandled) return; // Zaten işlendi
+                
+                const errorMsg = args.join(' ');
+                
+                // X-Frame-Options hatası kontrolü
+                if (errorMsg.includes('X-Frame-Options') || 
+                    errorMsg.includes('Refused to display') ||
+                    (errorMsg.includes('frame') && errorMsg.includes('denied')) ||
+                    errorMsg.includes('conflicting values')) {
+                    errorHandled = true;
+                    setTimeout(() => {
+                        showXFrameOptionsError(url);
+                        errorHandled = false;
+                    }, 100);
+                }
+                
+                // Mixed Content hatası kontrolü
+                if (errorMsg.includes('Mixed Content') || 
+                    errorMsg.includes('insecure frame') ||
+                    errorMsg.includes('blocked:mixed-content')) {
+                    errorHandled = true;
+                    setTimeout(() => {
+                        showMixedContentError(url);
+                        errorHandled = false;
+                    }, 100);
+                }
+            };
+            
+            // Security policy violation yakalama
+            const securityPolicyHandler = function(event) {
+                console.error('❌ Security Policy Violation:', event);
+                if (event.violatedDirective && event.violatedDirective.includes('frame')) {
+                    showXFrameOptionsError(url);
+                }
+            };
+            
+            // Error listener'ları ekle
+            window.addEventListener('error', errorHandler, true);
+            document.addEventListener('securitypolicyviolation', securityPolicyHandler);
             
             // URL'yi ayarla
             iframe.src = url;
             document.getElementById('iframeContainer').style.display = 'block';
             document.getElementById('emptyState').style.display = 'none';
             updateIframeSize();
+            
+            // 5 saniye sonra error listener'ları kaldır (memory leak önlemek için)
+            setTimeout(() => {
+                window.removeEventListener('error', errorHandler, true);
+                document.removeEventListener('securitypolicyviolation', securityPolicyHandler);
+                console.error = originalConsoleError; // Console.error'u geri yükle
+            }, 5000);
+        }
+        
+        // Hata mesajlarının tekrar gösterilmesini önlemek için flag
+        let xFrameOptionsErrorShown = false;
+        let mixedContentErrorShown = false;
+        
+        function showXFrameOptionsError(url) {
+            // Eğer zaten gösterildiyse tekrar gösterme
+            if (xFrameOptionsErrorShown) return;
+            xFrameOptionsErrorShown = true;
+            
+            const baseUrl = getOwlexUrl();
+            const statusBox = document.getElementById('cookieStatus');
+            const statusText = document.getElementById('cookieStatusText');
+            
+            statusBox.style.display = 'block';
+            statusBox.className = 'warning-box';
+            statusText.innerHTML = `
+                <strong>❌ X-Frame-Options Hatası!</strong><br>
+                Owlex backend'i iframe içinde gösterilmesini engelliyor.<br><br>
+                <strong>SORUN:</strong><br>
+                Backend'de X-Frame-Options header'ı SAMEORIGIN veya DENY olarak ayarlı.<br>
+                Bu header iframe içinde gösterilmesini engeller.<br><br>
+                <strong>ÇÖZÜM (Backend Gerekli):</strong><br>
+                1. Owlex config'de: <code>OVERRIDE_HTTP_HEADERS = {"X-Frame-Options": None}</code><br>
+                2. Veya Nginx config'inde X-Frame-Options header'ını kaldırın<br>
+                3. Backend'i yeniden başlatın<br><br>
+                <strong>GEÇİCİ ÇÖZÜM:</strong><br>
+                İçeriği yeni sekmede açmak için: <a href="${url}" target="_blank" style="color: #2196F3; font-weight: bold;">Tıklayın</a>
+            `;
+            
+            // Alert de göster (sadece bir kez)
+            setTimeout(() => {
+                alert(`❌ X-FRAME-OPTIONS HATASI!\n\nOwlex backend'i iframe içinde gösterilmesini engelliyor.\n\nÇÖZÜM:\n1. Owlex config'de X-Frame-Options header'ını kaldırın\n2. Nginx config'inde X-Frame-Options header'ını kaldırın\n3. Backend'i yeniden başlatın\n\nGeçici çözüm: İçeriği yeni sekmede açabilirsiniz.`);
+            }, 500);
+        }
+        
+        function showMixedContentError(url) {
+            // Eğer zaten gösterildiyse tekrar gösterme
+            if (mixedContentErrorShown) return;
+            mixedContentErrorShown = true;
+            
+            const baseUrl = getOwlexUrl();
+            const statusBox = document.getElementById('cookieStatus');
+            const statusText = document.getElementById('cookieStatusText');
+            
+            statusBox.style.display = 'block';
+            statusBox.className = 'warning-box';
+            statusText.innerHTML = `
+                <strong>❌ Mixed Content Hatası!</strong><br>
+                HTTPS sayfadan HTTP kaynağa erişim engellendi.<br><br>
+                <strong>SORUN:</strong><br>
+                Owlex backend'i HTTP redirect döndürüyor olabilir.<br>
+                Tarayıcılar HTTPS sayfadan HTTP kaynağa erişimi engeller.<br><br>
+                <strong>ÇÖZÜM (Backend Gerekli):</strong><br>
+                1. Owlex config'de: <code>SUPERSET_WEBSERVER_PROTOCOL = "https"</code><br>
+                2. Tüm redirect'lerin HTTPS olduğundan emin olun<br>
+                3. Backend'i yeniden başlatın<br><br>
+                <strong>GEÇİCİ ÇÖZÜM:</strong><br>
+                İçeriği yeni sekmede açmak için: <a href="${url}" target="_blank" style="color: #2196F3; font-weight: bold;">Tıklayın</a>
+            `;
+            
+            // Alert de göster (sadece bir kez)
+            setTimeout(() => {
+                alert(`❌ MIXED CONTENT HATASI!\n\nHTTPS sayfadan HTTP kaynağa erişim engellendi.\n\nÇÖZÜM:\n1. Owlex config'de SUPERSET_WEBSERVER_PROTOCOL = "https" olmalı\n2. Tüm redirect'lerin HTTPS olduğundan emin olun\n3. Backend'i yeniden başlatın\n\nGeçici çözüm: İçeriği yeni sekmede açabilirsiniz.`);
+            }, 500);
         }
         
         function show302Error() {
