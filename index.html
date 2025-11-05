@@ -313,12 +313,27 @@
                     </li>
                 </ol>
                 <br>
-                <strong>⚠️ ÖNEMLİ - Cookie Domain Kontrolü:</strong>
+                <strong>⚠️ ÖNEMLİ - Cookie Domain Sorunu:</strong>
                 <ul>
-                    <li>Cookie <code>devowlex.experilabs.online</code> domain'inde olmalı ✅</li>
-                    <li>Cookie'nin <strong>SameSite=None</strong> olması kritik!</li>
-                    <li>Eğer SameSite=Lax veya Strict ise → Cross-origin iframe'de çalışmaz</li>
-                    <li>Cookie gönderilmesi için: <code>SameSite=None; Secure</code> olmalı</li>
+                    <li>❌ <strong>localStorage'daki cookie çalışmaz!</strong> Cookie Superset domain'inde olmalı</li>
+                    <li>✅ <strong>Cookie'nin Superset domain'inde olması gerekir:</strong> <code>https://devowlex.experilabs.online</code></li>
+                    <li>Iframe içinde Superset'e istek gönderilirken cookie <strong>Superset domain'inden</strong> gönderilir</li>
+                    <li>localStorage'daki cookie Superset domain'ine gönderilmez!</li>
+                </ul>
+                <br>
+                <strong>✅ ÇÖZÜM (Tek Yol):</strong>
+                <ol>
+                    <li>Yeni sekmede <strong>https://devowlex.experilabs.online</strong> açın</li>
+                    <li><strong>Normal şekilde giriş yapın</strong></li>
+                    <li>Cookie <strong>otomatik olarak Superset domain'inde</strong> oluşur</li>
+                    <li>Bu Netlify sayfasına geri dönün</li>
+                    <li>Dashboard yükleyin → Cookie otomatik gönderilir ✅</li>
+                </ol>
+                <br>
+                <strong>❌ ÇALIŞMAYAN YÖNTEMLER:</strong>
+                <ul>
+                    <li>Manuel cookie girişi → localStorage'a kaydedilir ama Superset domain'inde değil</li>
+                    <li>Cross-origin cookie ayarlama → Tarayıcı güvenlik politikaları nedeniyle çalışmaz</li>
                 </ul>
                 <br>
                 <strong>🔍 302 Redirect Hatası İçin Network Tab Kontrolü:</strong>
@@ -528,23 +543,14 @@
                 const urlObj = new URL(baseUrl);
                 const domain = urlObj.hostname;
 
-                // Cookie'yi ayarla (cross-origin için)
-                const expires = new Date();
-                expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000)); // 24 saat
-
-                // Cookie'yi localStorage'a kaydet (iframe'de kullanmak için)
+                // Cookie'yi localStorage'a kaydet
                 localStorage.setItem('superset_session', sessionValue);
                 localStorage.setItem('superset_url', baseUrl);
                 localStorage.setItem('superset_domain', domain);
 
-                // Cross-origin cookie ayarlama denemesi (tarayıcı güvenlik politikaları nedeniyle çalışmayabilir)
-                try {
-                    document.cookie = `session=${sessionValue}; expires=${expires.toUTCString()}; path=/; SameSite=None; Secure`;
-                } catch (e) {
-                    console.log('Cookie ayarlama hatası (normal):', e.message);
-                }
-
-                alert('✅ Session cookie kaydedildi!\n\nCookie localStorage\'a kaydedildi ve iframe\'de kullanılacak.\n\nNot: Cross-origin cookie ayarlama tarayıcı güvenlik politikaları nedeniyle sınırlı olabilir. Eğer çalışmazsa, Superset\'e normal şekilde giriş yapın.');
+                // UYARI: Cross-origin cookie ayarlama tarayıcı güvenlik politikaları nedeniyle çalışmaz!
+                // Cookie'nin Superset domain'inde olması gerekir
+                alert('⚠️ ÖNEMLİ!\n\nCookie localStorage\'a kaydedildi ancak cross-origin cookie ayarlama çalışmaz!\n\nÇÖZÜM:\n1. Yeni sekmede Superset\'e giriş yapın: ' + baseUrl + '\n2. Cookie otomatik olarak Superset domain\'inde oluşur\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nCookie\'ler otomatik olarak iframe\'e gönderilecektir.');
             } catch (error) {
                 console.error('Cookie ayarlama hatası:', error);
                 alert('❌ Cookie ayarlanırken hata oluştu.');
@@ -620,9 +626,19 @@
             
             if (savedSession) {
                 console.log('Saved session cookie found in localStorage:', savedSession.substring(0, 50) + '...');
+                console.warn('⚠️ UYARI: localStorage\'daki cookie Superset domain\'inde değil!');
+                console.warn('Cookie\'nin Superset domain\'inde olması gerekir: https://devowlex.experilabs.online');
+                console.warn('ÇÖZÜM: Superset\'e normal şekilde giriş yapın, cookie otomatik oluşur.');
             } else {
                 console.warn('⚠️ No session cookie in localStorage!');
+                console.warn('ÇÖZÜM: Superset\'e giriş yapın veya cookie\'yi manuel olarak girin.');
             }
+            
+            // Gerçek cookie kontrolü (Superset domain'inde)
+            console.log('Current domain cookies:', document.cookie);
+            console.log('Superset domain cookie kontrolü için:');
+            console.log('1. F12 > Application > Cookies > https://devowlex.experilabs.online');
+            console.log('2. session cookie\'sinin olduğundan emin olun');
             
             // Cookie gönderimini test et
             checkCookieSupport(url);
