@@ -527,8 +527,16 @@
             
             // Önce /home endpoint'ini iframe içinde yükle (session cookie için)
             // Fetch Mixed Content hatasına yol açıyor, bu yüzden iframe kullanıyoruz
-            const homeUrl = `${baseUrl}/home/`;
+            let homeUrl = `${baseUrl}/home/`;
+            
+            // URL'yi HTTPS'e çevir (Mixed Content hatası önlemek için)
+            if (homeUrl.startsWith('http://')) {
+                homeUrl = homeUrl.replace('http://', 'https://');
+                console.warn('⚠️ /home URL HTTP\'den HTTPS\'e çevrildi:', homeUrl);
+            }
+            
             console.log('📡 /home endpoint\'i iframe içinde yükleniyor (session cookie için)...');
+            console.log('📡 /home URL:', homeUrl);
             
             // İlk olarak /home'u yükle, sonra dashboard'u yükle
             let homeLoaded = false;
@@ -545,6 +553,18 @@
                 console.log('✅ /home endpoint yüklendi');
                 homeLoaded = true;
                 
+                // Iframe içinde HTTP redirect olup olmadığını kontrol et
+                try {
+                    const currentUrl = hiddenIframe.contentWindow.location.href;
+                    if (currentUrl.startsWith('http://')) {
+                        console.error('❌ Mixed Content Hatası! /home HTTP redirect döndürdü:', currentUrl);
+                        console.error('ÇÖZÜM: Owlex config\'de SUPERSET_WEBSERVER_PROTOCOL = "https" olmalı!');
+                    }
+                } catch (e) {
+                    // Cross-origin hatası normaldir
+                    console.log('Cross-origin check (normal):', e.message);
+                }
+                
                 // Şimdi dashboard URL'ini yükle
                 setTimeout(() => {
                     loadIframeWithUrl(url, title, iframe);
@@ -556,6 +576,15 @@
                 // Hata olsa bile dashboard URL'ini yükle
                 loadIframeWithUrl(url, title, iframe);
             };
+            
+            // Mixed Content hatası kontrolü için error listener
+            window.addEventListener('error', function(e) {
+                if (e.message && e.message.includes('Mixed Content')) {
+                    console.error('❌ Mixed Content Hatası Algılandı!');
+                    console.error('ÇÖZÜM: Owlex config\'de SUPERSET_WEBSERVER_PROTOCOL = "https" olmalı!');
+                    console.error('MIXED_CONTENT_BACKEND_FIX.md dosyasına bakın.');
+                }
+            }, true);
             
             // Timeout: 3 saniye içinde /home yüklenmezse dashboard'u yükle
             setTimeout(() => {
