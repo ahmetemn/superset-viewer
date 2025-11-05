@@ -616,6 +616,12 @@
             document.getElementById('viewerTitle').textContent = title;
             const iframe = document.getElementById('contentFrame');
             
+            // URL'yi HTTPS'e çevir (Mixed Content hatası önlemek için)
+            if (url.startsWith('http://')) {
+                url = url.replace('http://', 'https://');
+                console.warn('⚠️ HTTP URL HTTPS\'e çevrildi:', url);
+            }
+            
             // Cookie kontrolü ve debug bilgisi
             console.log('Loading URL:', url);
             console.log('Cookies:', document.cookie);
@@ -652,6 +658,13 @@
                         try {
                             const currentUrl = iframe.contentWindow.location.href;
                             console.log('Iframe current URL:', currentUrl);
+                            
+                            // HTTP URL kontrolü
+                            if (currentUrl.startsWith('http://')) {
+                                console.error('❌ Mixed Content Hatası! HTTP URL algılandı:', currentUrl);
+                                alert('⚠️ Mixed Content Hatası!\n\nSuperset URL\'i HTTPS ile başlamalı!\n\nLütfen Superset URL\'ini kontrol edin:\nhttps://devowlex.experilabs.online\n\nHTTP URL\'ler HTTPS sayfalarda çalışmaz!');
+                                return;
+                            }
                             
                             // Eğer login sayfasına yönlendirilmişse
                             if (currentUrl.includes('/login') || currentUrl.includes('/auth')) {
@@ -699,7 +712,7 @@ EĞER COOKIE HEADER VARSA:
             
             iframe.onerror = function() {
                 console.error('Iframe load error');
-                alert('❌ İçerik yüklenirken hata oluştu!\n\nLütfen:\n1. Superset sunucusuna giriş yaptığınızdan emin olun\n2. URL\'nin doğru olduğunu kontrol edin\n3. Browser Console\'u açın (F12) ve Network tab\'inde cookie\'lerin gönderildiğini kontrol edin');
+                alert('❌ İçerik yüklenirken hata oluştu!\n\nLütfen:\n1. Superset sunucusuna giriş yaptığınızdan emin olun\n2. URL\'nin HTTPS ile başladığından emin olun (https://)\n3. Browser Console\'u açın (F12) ve Network tab\'inde cookie\'lerin gönderildiğini kontrol edin');
             };
             
             // URL'yi ayarla (credentials ile)
@@ -711,6 +724,11 @@ EĞER COOKIE HEADER VARSA:
         
         function checkCookieSupport(url) {
             try {
+                // URL'yi HTTPS'e çevir
+                if (url.startsWith('http://')) {
+                    url = url.replace('http://', 'https://');
+                }
+                
                 const urlObj = new URL(url);
                 const domain = urlObj.hostname;
                 
@@ -728,6 +746,13 @@ EĞER COOKIE HEADER VARSA:
                         console.warn('⚠️ 302 Redirect detected!');
                         console.log('Redirect Location:', location);
                         
+                        // Location header'ı HTTP ise HTTPS'e çevir
+                        if (location && location.startsWith('http://')) {
+                            console.warn('⚠️ Redirect Location HTTP! HTTPS\'e çevriliyor...');
+                            const httpsLocation = location.replace('http://', 'https://');
+                            console.log('HTTPS Location:', httpsLocation);
+                        }
+                        
                         if (location && (location.includes('/login') || location.includes('/home'))) {
                             console.error('❌ Cookie gönderilmedi veya geçersiz!');
                             console.log('ÇÖZÜM:');
@@ -741,6 +766,10 @@ EĞER COOKIE HEADER VARSA:
                     }
                 }).catch(error => {
                     console.error('Cookie test error:', error);
+                    if (error.message.includes('Mixed Content') || error.message.includes('insecure')) {
+                        console.error('❌ Mixed Content Hatası! URL HTTPS olmalı:', url);
+                        console.error('ÇÖZÜM: Superset URL\'i HTTPS ile başlamalı: https://devowlex.experilabs.online');
+                    }
                 });
             } catch (e) {
                 console.log('Cookie test setup error:', e.message);
