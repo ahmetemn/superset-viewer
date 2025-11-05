@@ -3,64 +3,544 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İçerik Burada Görünecek</title>
+    <title>Owlex Chart & Dashboard Viewer</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .container {
-            width: 100%;
-            max-width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             overflow: hidden;
         }
-        
-        h1 {
-            padding: 20px;
-            background: #4a90e2;
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            padding: 30px;
             text-align: center;
-            font-size: 24px;
-            font-weight: 600;
         }
-        
-        iframe {
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.95em;
+        }
+
+        .control-group input,
+        .control-group select {
             width: 100%;
-            height: 800px;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .viewer-container {
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .viewer-header h2 {
+            color: #495057;
+            font-size: 1.5em;
+        }
+
+        .size-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .size-controls label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .size-controls input {
+            width: 100px;
+            padding: 8px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+        }
+
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f8f9fa;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .iframe-container iframe {
+            width: 100%;
             border: none;
             display: block;
         }
-        
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: #1976D2;
+        }
+
+        .info-box ol {
+            margin: 10px 0 0 20px;
+            padding-left: 10px;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         @media (max-width: 768px) {
-            h1 {
-                font-size: 18px;
-                padding: 15px;
+            .header h1 {
+                font-size: 1.8em;
             }
-            
-            iframe {
-                height: 600px;
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .size-controls {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>İçerik Burada Görünecek</h1>
-        <iframe src='http://localhost:8088/owlex/public/dashboard/198?public=true' width='100%' height='800' frameborder='0'></iframe></body>
-</html>
+        <div class="header">
+            <h1>📊 Owlex Viewer</h1>
+            <p>Chart ve Dashboard'ları iframe içinde görüntüleyin</p>
+        </div>
 
+        <div class="controls">
+            <div class="info-box">
+                <strong>📋 Session Cookie Nasıl Eklenir:</strong>
+                <ol>
+                    <li>Owlex sunucusuna (<strong>https://devowlex.experilabs.online</strong>) normal şekilde giriş yapın</li>
+                    <li>Bu HTML dosyasını tarayıcıda açın</li>
+                    <li><strong>F12</strong> tuşuna basın (veya sağ tık > İncele / Inspect)</li>
+                    <li><strong>Application</strong> sekmesine gidin (veya <strong>Storage</strong> sekmesi)</li>
+                    <li>Sol menüden <strong>Cookies</strong> > <strong>https://devowlex.experilabs.online</strong> seçin</li>
+                    <li><strong>session</strong> isimli cookie'yi bulun ve <strong>Value</strong> değerini kopyalayın</li>
+                    <li>Bu HTML dosyasının domain'ine (ör: <strong>file://</strong> veya <strong>localhost</strong>) aynı şekilde <strong>session</strong> cookie'sini ekleyin</li>
+                    <li>Alternatif: <strong>EditThisCookie</strong> veya benzeri bir browser extension kullanabilirsiniz</li>
+                </ol>
+                <br>
+                <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez!
+            </div>
+
+            <div class="control-group">
+                <label for="owlexUrl">Owlex Sunucu URL</label>
+                <input 
+                    type="text" 
+                    id="owlexUrl" 
+                    placeholder=""
+                    value="https://devowlex.experilabs.online"
+                >
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('chart')">📈 Chart</button>
+                <button class="tab" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            </div>
+
+            <div id="chartTab" class="tab-content active">
+                <div class="control-group">
+                    <label for="chartId">Chart ID</label>
+                    <input 
+                        type="number" 
+                        id="chartId" 
+                        placeholder="Örn: 123"
+                    >
+                </div>
+                <div class="control-group">
+                    <label for="chartShortUrl">Veya Chart Short URL ID (r parametresi)</label>
+                    <input 
+                        type="text" 
+                        id="chartShortUrl" 
+                        placeholder="Örn: abc123 (veya /r/abc123 formatında)"
+                    >
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="loadChartStandalone()">Chart Yükle</button>
+                </div>
+            </div>
+
+            <div id="dashboardTab" class="tab-content">
+                <div class="control-group">
+                    <label for="dashboardId">Dashboard ID</label>
+                    <input 
+                        type="number" 
+                        id="dashboardId" 
+                        placeholder="Örn: 5"
+                    >
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="loadDashboardStandalone()">Dashboard Yükle</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="viewer-container">
+            <div class="viewer-header">
+                <h2 id="viewerTitle">İçerik Burada Görünecek</h2>
+                <div class="size-controls">
+                    <label>Genişlik:</label>
+                    <input type="number" id="iframeWidth" value="100" onchange="updateIframeSize()">%
+                    <label>Yükseklik:</label>
+                    <input type="number" id="iframeHeight" value="800" onchange="updateIframeSize()">px
+                    <button class="btn btn-danger" onclick="clearViewer()" style="padding: 8px 20px; min-width: auto;">Temizle</button>
+                </div>
+            </div>
+
+            <div id="iframeContainer" class="iframe-container" style="display: none;">
+                <iframe id="contentFrame" frameborder="0" scrolling="auto"></iframe>
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                </svg>
+                <h3>Henüz içerik yüklenmedi</h3>
+                <p>Yukarıdaki formu doldurarak Chart veya Dashboard yükleyin</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            // Tüm tab'ları gizle
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Seçilen tab'ı göster
+            if (tab === 'chart') {
+                document.getElementById('chartTab').classList.add('active');
+                document.querySelectorAll('.tab')[0].classList.add('active');
+            } else {
+                document.getElementById('dashboardTab').classList.add('active');
+                document.querySelectorAll('.tab')[1].classList.add('active');
+            }
+        }
+
+        function getOwlexUrl() {
+            let url = document.getElementById('owlexUrl').value.trim();
+            if (!url) {
+                alert('Lütfen Owlex sunucu URL\'sini girin!');
+                return null;
+            }
+            // URL'nin sonunda / varsa kaldır
+            url = url.replace(/\/$/, '');
+            return url;
+        }
+
+        function loadChart() {
+            const baseUrl = getOwlexUrl();
+            if (!baseUrl) return;
+
+            const chartId = document.getElementById('chartId').value.trim();
+            const chartShortUrl = document.getElementById('chartShortUrl').value.trim();
+
+            let url = '';
+
+            if (chartShortUrl) {
+                // Short URL ID kullanılıyorsa
+                let shortId = chartShortUrl;
+                if (shortId.includes('/r/')) {
+                    shortId = shortId.split('/r/')[1];
+                }
+                url = `${baseUrl}/?r=${shortId}&height=800`;
+            } else if (chartId) {
+                // Chart ID kullanılıyorsa
+                url = `${baseUrl}/superset/explore/?slice_id=${chartId}&height=800`;
+            } else {
+                alert('Lütfen Chart ID veya Chart Short URL ID girin!');
+                return;
+            }
+
+            showContent(url, `Chart ${chartId || chartShortUrl}`);
+        }
+
+        function loadChartStandalone() {
+            const baseUrl = getOwlexUrl();
+            if (!baseUrl) return;
+
+            const chartId = document.getElementById('chartId').value.trim();
+            const chartShortUrl = document.getElementById('chartShortUrl').value.trim();
+
+            let url = '';
+
+            if (chartShortUrl) {
+                // Short URL ID kullanılıyorsa
+                let shortId = chartShortUrl;
+                if (shortId.includes('/r/')) {
+                    shortId = shortId.split('/r/')[1];
+                }
+                url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
+            } else if (chartId) {
+                // Chart ID kullanılıyorsa
+                url = `${baseUrl}/superset/explore/?slice_id=${chartId}&standalone=1&height=800`;
+            } else {
+                alert('Lütfen Chart ID veya Chart Short URL ID girin!');
+                return;
+            }
+
+            showContent(url, `Chart ${chartId || chartShortUrl}`);
+        }
+
+        function loadDashboard() {
+            const baseUrl = getOwlexUrl();
+            if (!baseUrl) return;
+
+            const dashboardId = document.getElementById('dashboardId').value.trim();
+
+            if (!dashboardId) {
+                alert('Lütfen Dashboard ID girin!');
+                return;
+            }
+
+            const url = `${baseUrl}/superset/dashboard/${dashboardId}/`;
+            showContent(url, `Dashboard ${dashboardId}`);
+        }
+
+        function loadDashboardStandalone() {
+            const baseUrl = getOwlexUrl();
+            if (!baseUrl) return;
+
+            const dashboardId = document.getElementById('dashboardId').value.trim();
+
+            if (!dashboardId) {
+                alert('Lütfen Dashboard ID girin!');
+                return;
+            }
+
+            const url = `${baseUrl}/superset/dashboard/${dashboardId}/?standalone=1`;
+            showContent(url, `Dashboard ${dashboardId}`);
+        }
+
+        function showContent(url, title) {
+            document.getElementById('viewerTitle').textContent = title;
+            document.getElementById('contentFrame').src = url;
+            document.getElementById('iframeContainer').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+            updateIframeSize();
+        }
+
+        function updateIframeSize() {
+            const width = document.getElementById('iframeWidth').value;
+            const height = document.getElementById('iframeHeight').value;
+            const iframe = document.getElementById('contentFrame');
+            const container = document.getElementById('iframeContainer');
+
+            container.style.width = width + '%';
+            iframe.style.height = height + 'px';
+        }
+
+        function clearViewer() {
+            document.getElementById('contentFrame').src = '';
+            document.getElementById('iframeContainer').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('viewerTitle').textContent = 'İçerik Burada Görünecek';
+        }
+
+        // Enter tuşu ile yükleme
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const activeTab = document.querySelector('.tab.active').textContent;
+                        if (activeTab.includes('Chart')) {
+                            loadChartStandalone();
+                        } else {
+                            loadDashboardStandalone();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
