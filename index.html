@@ -708,11 +708,20 @@ EĞER COOKIE HEADER VARSA:
                     console.log('Response headers:', [...response.headers.entries()]);
                     
                     if (response.status === 302) {
-                        console.warn('⚠️ 302 Redirect - Cookie gönderilmedi veya geçersiz!');
-                        console.log('Cookie gönderimini kontrol edin:');
-                        console.log('1. F12 > Application > Cookies > ' + domain);
-                        console.log('2. session cookie\'sinin olduğundan emin olun');
-                        console.log('3. SameSite=None ve Secure=true olmalı');
+                        const location = response.headers.get('Location');
+                        console.warn('⚠️ 302 Redirect detected!');
+                        console.log('Redirect Location:', location);
+                        
+                        if (location && (location.includes('/login') || location.includes('/home'))) {
+                            console.error('❌ Cookie gönderilmedi veya geçersiz!');
+                            console.log('ÇÖZÜM:');
+                            console.log('1. F12 > Network tab\'ini açın');
+                            console.log('2. Request Headers\'da Cookie header\'ının olup olmadığını kontrol edin');
+                            console.log('3. Eğer Cookie header YOKSA → Superset\'e giriş yapın');
+                            console.log('4. Eğer Cookie header VARSA → Cookie geçersiz, tekrar giriş yapın');
+                        }
+                    } else if (response.status === 200) {
+                        console.log('✅ Cookie çalışıyor!');
                     }
                 }).catch(error => {
                     console.error('Cookie test error:', error);
