@@ -307,11 +307,29 @@
                     <li>Bu HTML dosyasının domain'ine aynı şekilde <strong>session</strong> cookie'sini ekleyin</li>
                 </ol>
                 <br>
-                <strong>⚠️ ÖNEMLİ - HTTPS:</strong>
+                <strong>⚠️ ÖNEMLİ - HTTPS ve Cookie:</strong>
                 <ul>
                     <li>Bu sayfa HTTPS üzerinden açıldığı için cookie ayarlama çalışacaktır</li>
                     <li>Iframe otomatik olarak cookie gönderir</li>
-                    <li>Superset'e giriş yaptıysanız, cookie otomatik olarak iframe içinde çalışır</li>
+                    <li><strong>302 Redirect Hatası?</strong> Superset sunucusuna giriş yapmanız gerekiyor!</li>
+                    <li><strong>Çözüm:</strong> Yeni sekmede Superset sunucusunu açın, giriş yapın, sonra bu sayfaya geri dönün</li>
+                </ul>
+                <br>
+                <strong>🔧 Superset Config Kontrolü (Config Dosyanızda Mevcut ✅):</strong>
+                <ul>
+                    <li>✅ <code>OVERRIDE_HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}</code></li>
+                    <li>✅ <code>SESSION_COOKIE_SAMESITE = "None"</code></li>
+                    <li>✅ <code>SESSION_COOKIE_SECURE = True</code></li>
+                    <li>✅ <code>ENABLE_CORS = True</code> ve <code>supports_credentials: True</code></li>
+                    <li>✅ <code>ALLOW_DASHBOARD_DOMAIN_SHARING: True</code></li>
+                </ul>
+                <br>
+                <strong>🔍 302 Redirect Sorunu İçin:</strong>
+                <ul>
+                    <li>Browser Console'u açın (F12) ve Network tab'inde kontrol edin</li>
+                    <li>Request Headers'da Cookie gönderilip gönderilmediğini kontrol edin</li>
+                    <li>Superset sunucusuna <strong>önce normal şekilde giriş yapın</strong>, sonra iframe'i test edin</li>
+                    <li>Cookie'lerin <code>SameSite=None; Secure</code> olduğundan emin olun</li>
                 </ul>
                 <br>
                 <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez!
@@ -382,7 +400,13 @@
             </div>
 
             <div id="iframeContainer" class="iframe-container" style="display: none;">
-                <iframe id="contentFrame" frameborder="0" scrolling="auto"></iframe>
+                <iframe 
+                    id="contentFrame" 
+                    frameborder="0" 
+                    scrolling="auto"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allow="fullscreen"
+                ></iframe>
             </div>
 
             <div id="emptyState" class="empty-state">
@@ -472,7 +496,44 @@
 
         function showContent(url, title) {
             document.getElementById('viewerTitle').textContent = title;
-            document.getElementById('contentFrame').src = url;
+            const iframe = document.getElementById('contentFrame');
+            
+            // Cookie kontrolü ve debug bilgisi
+            console.log('Loading URL:', url);
+            console.log('Cookies:', document.cookie);
+            
+            // Iframe load event listener - hata kontrolü için
+            iframe.onload = function() {
+                console.log('Iframe loaded successfully');
+                try {
+                    // Cross-origin kontrolü için timeout kullan
+                    setTimeout(() => {
+                        try {
+                            const currentUrl = iframe.contentWindow.location.href;
+                            console.log('Iframe current URL:', currentUrl);
+                            
+                            // Eğer login sayfasına yönlendirilmişse
+                            if (currentUrl.includes('/login') || currentUrl.includes('/auth')) {
+                                console.warn('302 Redirect detected - Authentication required');
+                                alert('⚠️ Oturum Gerekli!\n\nSuperset sunucusuna giriş yapmanız gerekiyor.\n\n1. Yeni bir sekmede Superset sunucusunu açın: ' + url.split('/superset')[0] + '\n2. Giriş yapın\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nCookie\'ler otomatik olarak gönderilecektir.');
+                            }
+                        } catch (e) {
+                            // Cross-origin hatası normaldir
+                            console.log('Cross-origin check (normal):', e.message);
+                        }
+                    }, 2000);
+                } catch (e) {
+                    console.log('Iframe URL check:', e.message);
+                }
+            };
+            
+            iframe.onerror = function() {
+                console.error('Iframe load error');
+                alert('❌ İçerik yüklenirken hata oluştu!\n\nLütfen:\n1. Superset sunucusuna giriş yaptığınızdan emin olun\n2. URL\'nin doğru olduğunu kontrol edin\n3. Browser Console\'u açın (F12) ve Network tab\'inde cookie\'lerin gönderildiğini kontrol edin');
+            };
+            
+            // URL'yi ayarla (credentials ile)
+            iframe.src = url;
             document.getElementById('iframeContainer').style.display = 'block';
             document.getElementById('emptyState').style.display = 'none';
             updateIframeSize();

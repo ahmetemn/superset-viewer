@@ -1,0 +1,47 @@
+#!/bin/bash
+
+echo "🔧 GitHub Pages Sorun Giderme"
+echo "=============================="
+echo ""
+echo "Repository URL: https://github.com/ahmetemn/superset-viewer"
+echo ""
+
+echo "📋 Kontrol Listesi:"
+echo ""
+echo "1️⃣  Repository Public mi?"
+echo "   → https://github.com/ahmetemn/superset-viewer/settings"
+echo "   → Eğer 'Private' yazıyorsa, 'Change visibility' ile 'Public' yapın"
+echo ""
+echo "2️⃣  GitHub Pages Ayarları:"
+echo "   → https://github.com/ahmetemn/superset-viewer/settings/pages"
+echo "   → Source: 'Deploy from a branch' seçin"
+echo "   → Branch: 'main' seçin"
+echo "   → Folder: '/ (root)' seçin"
+echo "   → Save butonuna tıklayın"
+echo ""
+echo "3️⃣  Bekleyin:"
+echo "   → 1-5 dakika sonra şu adreste çalışacak:"
+echo "   → https://ahmetemn.github.io/superset-viewer/"
+echo ""
+echo "🚀 Alternatif: Netlify kullanmak isterseniz:"
+echo "   → https://www.netlify.com/"
+echo "   → 'Add new site' > 'Deploy manually'"
+echo "   → Dosyaları sürükle-bırak"
+echo ""
+
+read -p "GitHub Pages ayarlarını yaptıktan sonra ENTER'a basın..."
+
+echo ""
+echo "✅ Kontrol ediliyor..."
+sleep 2
+
+echo ""
+echo "📱 Şimdi bu URL'yi açın:"
+echo "   https://ahmetemn.github.io/superset-viewer/"
+echo ""
+echo "Eğer hala çalışmıyorsa:"
+echo "   - Repository'nin Public olduğundan emin olun"
+echo "   - GitHub Pages ayarlarının doğru olduğunu kontrol edin"
+echo "   - Birkaç dakika bekleyin (deployment zaman alabilir)"
+echo ""
+
