@@ -296,23 +296,7 @@
 
         <div class="controls">
             <div class="info-box">
-                <strong>📋 Session Cookie Kontrolü (ÖNEMLİ!):</strong>
-                <ol>
-                    <li><strong>ÖNCE</strong> Owlex sunucusuna giriş yapın: <code>https://devowlex.experilabs.online</code></li>
-                    <li><strong>Ana sayfaya gidin:</strong> <code>https://devowlex.experilabs.online/home/</code></li>
-                    <li><strong>F12</strong> tuşuna basın (Developer Tools)</li>
-                    <li><strong>Application</strong> sekmesine gidin</li>
-                    <li>Sol menüden <strong>Cookies</strong> > <strong>https://devowlex.experilabs.online</strong> seçin</li>
-                    <li><strong>session</strong> cookie'sini kontrol edin:
-                        <ul>
-                            <li>✅ Name: <code>session</code></li>
-                            <li>✅ Secure: ✓ (işaretli olmalı)</li>
-                            <li>✅ HttpOnly: ✓ (işaretli olmalı)</li>
-                            <li>⚠️ <strong>SameSite: None</strong> olmalı (en önemli!)</li>
-                        </ul>
-                    </li>
-                </ol>
-                <br>
+                
                 <strong>⚠️ ÖNEMLİ - Cookie Domain Sorunu:</strong>
                 <ul>
                     <li>❌ <strong>localStorage'daki cookie çalışmaz!</strong> Cookie Owlex domain'inde olmalı</li>
@@ -622,8 +606,43 @@
                 console.warn('⚠️ HTTP URL HTTPS\'e çevrildi:', url);
             }
             
-            // Direkt iframe'e yükle (fetch Mixed Content hatası veriyor)
-            loadIframeWithUrl(url, title, iframe);
+            // Önce HEAD request ile redirect'i kontrol et (ama Mixed Content hatası olabilir)
+            // Eğer redirect varsa Location header'ını HTTPS'e çevir
+            fetch(url, {
+                method: 'HEAD',
+                credentials: 'include',
+                mode: 'cors',
+                redirect: 'manual' // Redirect'i manuel handle et
+            }).then(response => {
+                let finalUrl = url;
+                
+                if (response.status === 302 || response.status === 301) {
+                    const location = response.headers.get('Location');
+                    if (location) {
+                        // Relative URL ise absolute URL'e çevir
+                        let redirectUrl = location;
+                        if (location.startsWith('/')) {
+                            const urlObj = new URL(url);
+                            redirectUrl = urlObj.origin + location;
+                        }
+                        
+                        // HTTP ise HTTPS'e çevir
+                        if (redirectUrl.startsWith('http://')) {
+                            redirectUrl = redirectUrl.replace('http://', 'https://');
+                            console.warn('⚠️ Redirect Location HTTP! HTTPS\'e çevrildi:', redirectUrl);
+                        }
+                        
+                        finalUrl = redirectUrl;
+                    }
+                }
+                
+                // Iframe'i HTTPS URL ile yükle
+                loadIframeWithUrl(finalUrl, title, iframe);
+            }).catch(error => {
+                // Mixed Content hatası veya başka bir hata - direkt yükle
+                console.warn('Redirect check failed (normal):', error.message);
+                loadIframeWithUrl(url, title, iframe);
+            });
         }
         
         function loadIframeWithUrl(url, title, iframe) {
@@ -657,12 +676,13 @@
             console.log('1. F12 > Application > Cookies > https://devowlex.experilabs.online');
             console.log('2. session cookie\'sinin olduğundan emin olun');
             
-            // Cookie gönderimini test et (Mixed Content hatası olabilir, ignore et)
-            try {
-                checkCookieSupport(url);
-            } catch (e) {
-                console.log('Cookie test skipped (Mixed Content):', e.message);
-            }
+            // Cookie gönderimini test et (Mixed Content hatası olabilir, skip et)
+            // checkCookieSupport fonksiyonu Mixed Content hatasına yol açıyor, devre dışı bırakıldı
+            // try {
+            //     checkCookieSupport(url);
+            // } catch (e) {
+            //     console.log('Cookie test skipped (Mixed Content):', e.message);
+            // }
             
             // Iframe load event listener - hata kontrolü için
             iframe.onload = function() {
@@ -734,15 +754,24 @@ EĞER COOKIE HEADER VARSA:
                 // Mixed Content hatası olabilir, tekrar dene
                 setTimeout(() => {
                     const currentSrc = iframe.src;
-                    if (currentSrc.startsWith('http://')) {
+                    if (currentSrc && currentSrc.startsWith('http://')) {
                         const httpsSrc = currentSrc.replace('http://', 'https://');
                         console.warn('⚠️ Mixed Content hatası! HTTPS URL ile tekrar deniyor:', httpsSrc);
                         iframe.src = httpsSrc;
+                    } else {
+                        alert('❌ İçerik yüklenirken hata oluştu!\n\nLütfen:\n1. Owlex sunucusuna giriş yaptığınızdan emin olun\n2. URL\'nin HTTPS ile başladığından emin olun (https://)\n3. Browser Console\'u açın (F12) ve Network tab\'inde cookie\'lerin gönderildiğini kontrol edin');
                     }
                 }, 1000);
             };
             
             // URL'yi ayarla (credentials ile)
+            // URL mutlaka HTTPS olmalı
+            if (!url.startsWith('https://')) {
+                url = url.replace('http://', 'https://');
+                console.warn('⚠️ URL HTTPS\'e çevrildi:', url);
+            }
+            
+            console.log('Setting iframe src to:', url);
             iframe.src = url;
             document.getElementById('iframeContainer').style.display = 'block';
             document.getElementById('emptyState').style.display = 'none';
