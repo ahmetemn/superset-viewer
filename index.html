@@ -486,7 +486,7 @@
                 if (shortId.includes('/r/')) {
                     shortId = shortId.split('/r/')[1];
                 }
-                url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
+                url = `${baseUrl}/?r=${shortId}&standalone=2&height=800`;
             } else if (chartId) {
                 // Chart'ı direkt embed etmek için chart API'sinden form_data'yı al
                 try {
@@ -512,22 +512,22 @@
                             const formDataEncoded = encodeURIComponent(JSON.stringify(formData));
                             
                             // Explore sayfasına yönlendir
-                            url = `${baseUrl}/main/explore/?form_data=${formDataEncoded}&slice_id=${chartId}&standalone=1`;
+                            url = `${baseUrl}/main/explore/?form_data=${formDataEncoded}&slice_id=${chartId}&standalone=2`;
                             console.log('✅ Chart URL oluşturuldu:', url);
                         } else {
                             // Form_data yoksa slice_id ile dene
                             console.warn('⚠️ Form_data bulunamadı, slice_id ile deniyor...');
-                            url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1`;
+                            url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=2`;
                         }
                     } else {
                         console.warn('⚠️ Chart API\'den veri alınamadı, chart detail endpoint\'ini kullanıyoruz...');
                         // API çalışmazsa chart detail endpoint'ini kullan
-                        url = `${baseUrl}/superset/chart/${chartId}/?standalone=1`;
+                        url = `${baseUrl}/superset/chart/${chartId}/?standalone=2`;
                     }
                 } catch (error) {
                     console.error('❌ Chart API hatası:', error);
                     // Hata durumunda chart detail endpoint'ini kullan
-                    url = `${baseUrl}/superset/chart/${chartId}/?standalone=1`;
+                    url = `${baseUrl}/superset/chart/${chartId}/?standalone=2`;
                 }
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
