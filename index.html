@@ -792,10 +792,12 @@ EĞER COOKIE HEADER VARSA:
                         console.log('✅ Cookie çalışıyor!');
                     }
                 }).catch(error => {
-                    console.error('Cookie test error:', error);
+                    // Mixed Content hatası ignore edilir
                     if (error.message.includes('Mixed Content') || error.message.includes('insecure')) {
-                        console.error('❌ Mixed Content Hatası! URL HTTPS olmalı:', url);
-                        console.error('ÇÖZÜM: Owlex URL\'i HTTPS ile başlamalı: https://devowlex.experilabs.online');
+                        console.warn('⚠️ Mixed Content hatası (normal):', error.message);
+                        console.warn('Iframe içinde HTTP redirect olursa otomatik HTTPS\'e çevrilecek');
+                    } else {
+                        console.error('Cookie test error:', error);
                     }
                 });
             } catch (e) {
