@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Owlex Chart & Dashboard Viewer</title>
+    <title>Owlex Viewer</title>
     <style>
         * {
             margin: 0;
@@ -212,11 +212,17 @@
             line-height: 1.6;
         }
 
-        .info-box strong {
-            color: #1976D2;
+        .info-box code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #d63384;
         }
 
-        .info-box ol {
+        .info-box ol,
+        .info-box ul {
             margin: 10px 0 0 20px;
             padding-left: 10px;
         }
@@ -290,29 +296,36 @@
 
         <div class="controls">
             <div class="info-box">
-                <strong>📋 Session Cookie Nasıl Eklenir:</strong>
-                <ol>
-                    <li>Owlex sunucusuna (<strong>https://devowlex.experilabs.online</strong>) normal şekilde giriş yapın</li>
-                    <li>Bu HTML dosyasını tarayıcıda açın</li>
-                    <li><strong>F12</strong> tuşuna basın (veya sağ tık > İncele / Inspect)</li>
-                    <li><strong>Application</strong> sekmesine gidin (veya <strong>Storage</strong> sekmesi)</li>
-                    <li>Sol menüden <strong>Cookies</strong> > <strong>https://devowlex.experilabs.online</strong> seçin</li>
-                    <li><strong>session</strong> isimli cookie'yi bulun ve <strong>Value</strong> değerini kopyalayın</li>
-                    <li>Bu HTML dosyasının domain'ine (ör: <strong>file://</strong> veya <strong>localhost</strong>) aynı şekilde <strong>session</strong> cookie'sini ekleyin</li>
-                    <li>Alternatif: <strong>EditThisCookie</strong> veya benzeri bir browser extension kullanabilirsiniz</li>
-                </ol>
-                <br>
-                <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez!
+                
+               
+                
+                
+
+                <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez! Cookie Owlex domain'inde olmalıdır.
             </div>
 
             <div class="control-group">
-                <label for="owlexUrl">Owlex Sunucu URL</label>
+                <label for="supersetUrl">Owlex Sunucu URL</label>
                 <input 
                     type="text" 
-                    id="owlexUrl" 
-                    placeholder=""
+                    id="supersetUrl" 
+                    placeholder="https://devowlex.experilabs.online"
                     value="https://devowlex.experilabs.online"
                 >
+            </div>
+
+            <div class="control-group">
+                <label for="sessionCookie">Session Cookie (Manuel Giriş)</label>
+                <input 
+                    type="text" 
+                    id="sessionCookie" 
+                    placeholder="Session cookie değerini buraya yapıştırın..."
+                    style="font-family: monospace; font-size: 0.9em;"
+                >
+                <button class="btn btn-secondary" onclick="setSessionCookie()" style="margin-top: 10px; width: auto; padding: 8px 20px;">Cookie'yi Ayarla</button>
+                <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 0.85em;">
+                    F12 > Application > Cookies > https://devowlex.experilabs.online > session cookie'sinin Value değerini kopyalayıp buraya yapıştırın (Not: localStorage cookie çalışmaz, Owlex'e giriş yapın)
+                </small>
             </div>
 
             <div class="tabs">
@@ -370,7 +383,13 @@
             </div>
 
             <div id="iframeContainer" class="iframe-container" style="display: none;">
-                <iframe id="contentFrame" frameborder="0" scrolling="auto"></iframe>
+                <iframe 
+                    id="contentFrame" 
+                    frameborder="0" 
+                    scrolling="auto"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allow="fullscreen"
+                ></iframe>
             </div>
 
             <div id="emptyState" class="empty-state">
@@ -387,7 +406,6 @@
 
     <script>
         function switchTab(tab) {
-            // Tüm tab'ları gizle
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
@@ -395,7 +413,6 @@
                 tab.classList.remove('active');
             });
 
-            // Seçilen tab'ı göster
             if (tab === 'chart') {
                 document.getElementById('chartTab').classList.add('active');
                 document.querySelectorAll('.tab')[0].classList.add('active');
@@ -405,42 +422,52 @@
             }
         }
 
+        function setSessionCookie() {
+            // Tüm boşlukları temizle (space, tab, newline, vb.)
+            let sessionValue = document.getElementById('sessionCookie').value.replace(/\s+/g, '');
+            sessionValue = sessionValue.trim();
+            if (!sessionValue) {
+                alert('Lütfen session cookie değerini girin!');
+                return;
+            }
+
+            const baseUrl = getOwlexUrl();
+            if (!baseUrl) {
+                alert('Lütfen önce Owlex sunucu URL\'sini girin!');
+                return;
+            }
+
+            try {
+                const urlObj = new URL(baseUrl);
+                const domain = urlObj.hostname;
+
+                // Cookie'yi localStorage'a kaydet
+                localStorage.setItem('superset_session', sessionValue);
+                localStorage.setItem('superset_url', baseUrl);
+                localStorage.setItem('superset_domain', domain);
+
+                // UYARI: Cross-origin cookie ayarlama tarayıcı güvenlik politikaları nedeniyle çalışmaz!
+                // Cookie'nin Owlex domain'inde olması gerekir
+                alert('⚠️ ÖNEMLİ!\n\nCookie localStorage\'a kaydedildi ancak cross-origin cookie ayarlama çalışmaz!\n\nÇÖZÜM:\n1. Yeni sekmede Owlex\'e giriş yapın: ' + baseUrl + '\n2. Cookie otomatik olarak Owlex domain\'inde oluşur\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nCookie\'ler otomatik olarak iframe\'e gönderilecektir.');
+            } catch (error) {
+                console.error('Cookie ayarlama hatası:', error);
+                alert('❌ Cookie ayarlanırken hata oluştu.');
+            }
+        }
+
         function getOwlexUrl() {
-            let url = document.getElementById('owlexUrl').value.trim();
+            let url = document.getElementById('supersetUrl').value.trim();
             if (!url) {
                 alert('Lütfen Owlex sunucu URL\'sini girin!');
                 return null;
             }
-            // URL'nin sonunda / varsa kaldır
+            if (url.startsWith('http://')) {
+                url = url.replace('http://', 'https://');
+            } else if (!url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
             url = url.replace(/\/$/, '');
             return url;
-        }
-
-        function loadChart() {
-            const baseUrl = getOwlexUrl();
-            if (!baseUrl) return;
-
-            const chartId = document.getElementById('chartId').value.trim();
-            const chartShortUrl = document.getElementById('chartShortUrl').value.trim();
-
-            let url = '';
-
-            if (chartShortUrl) {
-                // Short URL ID kullanılıyorsa
-                let shortId = chartShortUrl;
-                if (shortId.includes('/r/')) {
-                    shortId = shortId.split('/r/')[1];
-                }
-                url = `${baseUrl}/?r=${shortId}&height=800`;
-            } else if (chartId) {
-                // Chart ID kullanılıyorsa
-                url = `${baseUrl}/superset/explore/?slice_id=${chartId}&height=800`;
-            } else {
-                alert('Lütfen Chart ID veya Chart Short URL ID girin!');
-                return;
-            }
-
-            showContent(url, `Chart ${chartId || chartShortUrl}`);
         }
 
         function loadChartStandalone() {
@@ -453,36 +480,19 @@
             let url = '';
 
             if (chartShortUrl) {
-                // Short URL ID kullanılıyorsa
                 let shortId = chartShortUrl;
                 if (shortId.includes('/r/')) {
                     shortId = shortId.split('/r/')[1];
                 }
                 url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
             } else if (chartId) {
-                // Chart ID kullanılıyorsa
-                url = `${baseUrl}/superset/explore/?slice_id=${chartId}&standalone=1&height=800`;
+                url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1&height=800`;
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
                 return;
             }
 
             showContent(url, `Chart ${chartId || chartShortUrl}`);
-        }
-
-        function loadDashboard() {
-            const baseUrl = getOwlexUrl();
-            if (!baseUrl) return;
-
-            const dashboardId = document.getElementById('dashboardId').value.trim();
-
-            if (!dashboardId) {
-                alert('Lütfen Dashboard ID girin!');
-                return;
-            }
-
-            const url = `${baseUrl}/superset/dashboard/${dashboardId}/`;
-            showContent(url, `Dashboard ${dashboardId}`);
         }
 
         function loadDashboardStandalone() {
@@ -496,16 +506,313 @@
                 return;
             }
 
-            const url = `${baseUrl}/superset/dashboard/${dashboardId}/?standalone=1`;
+            // URL'yi oluştur ve console'da göster
+            const url = `${baseUrl}/main/dashboard/${dashboardId}/?standalone=2&native_filters=%28%29`;
+            console.log('🔗 Dashboard URL:', url);
+            console.log('📋 URL Format Kontrolü:');
+            console.log('  - Base URL:', baseUrl);
+            console.log('  - Path: /main/dashboard/');
+            console.log('  - Dashboard ID:', dashboardId);
+            console.log('  - Parameters: standalone=2&native_filters=%28%29');
+            
+            // Cookie kontrolü
+            console.log('🍪 Cookie Kontrolü:');
+            console.log('  - Current domain:', window.location.hostname);
+            console.log('  - Owlex domain:', new URL(baseUrl).hostname);
+            console.log('  - Cookies in current domain:', document.cookie || '(none)');
+            console.log('  - ⚠️ ÖNEMLİ: Cookie\'nin Owlex domain\'inde olması gerekir!');
+            console.log('  - F12 > Application > Cookies > https://devowlex.experilabs.online > session cookie kontrol edin');
+            
             showContent(url, `Dashboard ${dashboardId}`);
         }
 
         function showContent(url, title) {
             document.getElementById('viewerTitle').textContent = title;
-            document.getElementById('contentFrame').src = url;
+            const iframe = document.getElementById('contentFrame');
+            
+            // URL'yi HTTPS'e çevir (Mixed Content hatası önlemek için)
+            if (url.startsWith('http://')) {
+                url = url.replace('http://', 'https://');
+                console.warn('⚠️ HTTP URL HTTPS\'e çevrildi:', url);
+            }
+            
+            // Direkt dashboard'u yükle
+            // /home endpoint'ine istek atmak X-Frame-Options ve Mixed Content hatalarına yol açıyor
+            // Bu hatalar backend config'de çözülmeli (SUPERSET_WEBSERVER_PROTOCOL = "https")
+            console.log('📡 Dashboard yükleniyor:', url);
+            loadIframeWithUrl(url, title, iframe);
+        }
+        
+        function loadIframeWithUrl(url, title, iframe) {
+            // URL'yi HTTPS'e çevir
+            if (url.startsWith('http://')) {
+                url = url.replace('http://', 'https://');
+                console.warn('⚠️ HTTP URL HTTPS\'e çevrildi:', url);
+            }
+            
+            // Cookie kontrolü ve debug bilgisi
+            console.log('Loading URL:', url);
+            console.log('Cookies:', document.cookie);
+            
+            // localStorage'dan cookie'yi al
+            const savedSession = localStorage.getItem('superset_session');
+            const savedDomain = localStorage.getItem('superset_domain');
+            
+            if (savedSession) {
+                console.log('Saved session cookie found in localStorage:', savedSession.substring(0, 50) + '...');
+                console.warn('⚠️ UYARI: localStorage\'daki cookie Owlex domain\'inde değil!');
+                console.warn('Cookie\'nin Owlex domain\'inde olması gerekir: https://devowlex.experilabs.online');
+                console.warn('ÇÖZÜM: Owlex\'e normal şekilde giriş yapın, cookie otomatik oluşur.');
+            } else {
+                console.warn('⚠️ No session cookie in localStorage!');
+                console.warn('ÇÖZÜM: Owlex\'e giriş yapın veya cookie\'yi manuel olarak girin.');
+            }
+            
+            // Gerçek cookie kontrolü (Owlex domain'inde)
+            console.log('Current domain cookies:', document.cookie);
+            console.log('Owlex domain cookie kontrolü için:');
+            console.log('1. F12 > Application > Cookies > https://devowlex.experilabs.online');
+            console.log('2. session cookie\'sinin olduğundan emin olun');
+            
+            // Cookie gönderimini test et (Mixed Content hatası olabilir, skip et)
+            // checkCookieSupport fonksiyonu Mixed Content hatasına yol açıyor, devre dışı bırakıldı
+            // try {
+            //     checkCookieSupport(url);
+            // } catch (e) {
+            //     console.log('Cookie test skipped (Mixed Content):', e.message);
+            // }
+            
+            // Iframe load event listener - hata kontrolü için
+            iframe.onload = function() {
+                console.log('✅ Iframe loaded successfully');
+                console.log('📋 Response Header Kontrolü:');
+                console.log('⚠️ ÖNEMLİ: Network tab\'inde Response Headers\'ı kontrol edin!');
+                console.log('❌ Eğer şunlar varsa → Backend\'de düzeltilmeli:');
+                console.log('   x-frame-options: ALLOWALL');
+                console.log('   x-frame-options: SAMEORIGIN');
+                console.log('   → Bu çelişkili header\'lar iframe\'i engelleyebilir!');
+                console.log('✅ ÇÖZÜM: Backend config\'de sadece biri olmalı:');
+                console.log('   OVERRIDE_HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}');
+                console.log('   veya Nginx config\'inde X-Frame-Options header\'ını kaldırın');
+                
+                try {
+                    // Cross-origin kontrolü için timeout kullan
+                    setTimeout(() => {
+                        try {
+                            const currentUrl = iframe.contentWindow.location.href;
+                            console.log('Iframe current URL:', currentUrl);
+                            
+                            // İçerik kontrolü
+                            try {
+                                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                                const bodyContent = iframeDoc.body ? iframeDoc.body.innerHTML.length : 0;
+                                console.log('Iframe içerik uzunluğu:', bodyContent, 'karakter');
+                                
+                                if (bodyContent === 0 || bodyContent < 100) {
+                                    console.warn('⚠️ Iframe içeriği boş görünüyor!');
+                                    console.warn('Bu X-Frame-Options çelişkisinden kaynaklanıyor olabilir.');
+                                    console.warn('Network tab > Response Headers > x-frame-options kontrol edin.');
+                                }
+                            } catch (e) {
+                                console.log('Cross-origin content check (normal):', e.message);
+                            }
+                            
+                            // HTTP URL kontrolü - EN ÖNEMLİSİ!
+                            if (currentUrl.startsWith('http://')) {
+                                console.error('❌ Mixed Content Hatası! HTTP URL algılandı:', currentUrl);
+                                const httpsUrl = currentUrl.replace('http://', 'https://');
+                                console.warn('⚠️ HTTP URL HTTPS\'e çevriliyor:', httpsUrl);
+                                // Iframe'i HTTPS URL ile yeniden yükle
+                                iframe.src = httpsUrl;
+                                return;
+                            }
+                            
+                            // Eğer /home sayfasına yönlendirilmişse (HTTP redirect sonucu)
+                            if (currentUrl.includes('/home') && !currentUrl.includes('/superset/dashboard')) {
+                                console.warn('⚠️ /home sayfasına yönlendirildi - Cookie sorunu olabilir');
+                                // URL'yi HTTPS'e çevir ve tekrar dene
+                                if (currentUrl.startsWith('http://')) {
+                                    const httpsUrl = currentUrl.replace('http://', 'https://');
+                                    console.warn('⚠️ HTTP URL HTTPS\'e çevriliyor:', httpsUrl);
+                                    iframe.src = httpsUrl;
+                                    return;
+                                }
+                            }
+                            
+                            // Eğer login sayfasına yönlendirilmişse veya /home'a yönlendirilmişse
+                            if (currentUrl.includes('/login') || currentUrl.includes('/auth') || 
+                                (currentUrl.includes('/home') && !currentUrl.includes('/dashboard'))) {
+                                console.error('❌ 302 Redirect detected - Authentication required');
+                                console.error('Redirected to:', currentUrl);
+                                console.error('Original URL:', url);
+                                
+                                // Cookie kontrolü için detaylı bilgi
+                                const baseUrl = url.split('/main')[0] || url.split('/superset')[0] || getOwlexUrl();
+                                console.log('🔍 302 HATA ANALİZİ:');
+                                console.log('1. F12 > Network tab\'ini açın');
+                                console.log('2. Request\'i bulun (302 FOUND)');
+                                console.log('3. Request Headers\'da Cookie header\'ını kontrol edin');
+                                console.log('4. Eğer Cookie header YOKSA → SameSite sorunu olabilir');
+                                console.log('5. F12 > Application > Cookies > ' + baseUrl);
+                                console.log('6. session cookie\'sinin SameSite=None olduğundan emin olun');
+                                
+                                // Detaylı hata mesajı
+                                const errorMsg = `
+⚠️ 302 REDIRECT HATASI
+
+Link doğrudan açılıyor ama iframe içinde çalışmıyor!
+
+SORUN: Cookie iframe'e gönderilmiyor
+
+KONTROL ADIMLARI:
+1. F12 > Network tab'ini açın
+2. Dashboard request'ini bulun (302 FOUND)
+3. Request Headers sekmesine gidin
+4. "Cookie:" header'ını kontrol edin
+
+EĞER COOKIE HEADER YOKSA:
+→ Cookie SameSite sorunu olabilir
+→ F12 > Application > Cookies > ${baseUrl}
+→ session cookie'nin SameSite=None olduğundan emin olun
+
+EĞER COOKIE HEADER VARSA:
+→ Cookie gönderiliyor ama geçersiz/expire olmuş
+→ Owlex'e tekrar giriş yapın
+
+ÇÖZÜM:
+1. Yeni sekmede: ${baseUrl}
+2. Giriş yapın (cookie otomatik oluşur)
+3. F12 > Application > Cookies > ${baseUrl}
+4. session cookie'nin SameSite=None olduğundan emin olun
+5. Bu sayfaya geri dönün ve tekrar deneyin
+
+NOT: Owlex backend config'inde şunlar olmalı:
+- SESSION_COOKIE_SAMESITE = "None"
+- SESSION_COOKIE_SECURE = True
+                                `;
+                                
+                                // Status box'ı güncelle
+                                const statusBox = document.getElementById('cookieStatus');
+                                const statusText = document.getElementById('cookieStatusText');
+                                if (statusBox && statusText) {
+                                    statusBox.style.display = 'block';
+                                    statusBox.className = 'warning-box';
+                                    statusText.innerHTML = `
+                                        <strong>❌ 302 Redirect Hatası!</strong><br>
+                                        Link doğrudan açılıyor ama iframe içinde çalışmıyor.<br><br>
+                                        <strong>SORUN:</strong> Cookie iframe'e gönderilmiyor<br><br>
+                                        <strong>ÇÖZÜM:</strong><br>
+                                        1. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3; font-weight: bold;">Owlex'e giriş yapın</a><br>
+                                        2. F12 > Application > Cookies > ${baseUrl}<br>
+                                        3. session cookie'nin <strong>SameSite=None</strong> olduğundan emin olun<br>
+                                        4. Bu sayfaya geri dönün ve tekrar deneyin<br><br>
+                                        <strong>Backend Config Kontrolü:</strong><br>
+                                        - SESSION_COOKIE_SAMESITE = "None"<br>
+                                        - SESSION_COOKIE_SECURE = True
+                                    `;
+                                }
+                                
+                                alert(errorMsg);
+                            }
+                        } catch (e) {
+                            // Cross-origin hatası normaldir
+                            console.log('Cross-origin check (normal):', e.message);
+                            // Mixed Content hatası olabilir, kontrol et
+                            if (e.message.includes('Blocked') || e.message.includes('Mixed')) {
+                                console.error('❌ Mixed Content hatası algılandı!');
+                                console.warn('ÇÖZÜM: Owlex backend\'inde redirect HTTPS olmalı');
+                            }
+                        }
+                    }, 2000);
+                } catch (e) {
+                    console.log('Iframe URL check:', e.message);
+                }
+            };
+            
+            // Iframe error handler - Mixed Content hatası için
+            iframe.onerror = function() {
+                console.error('Iframe load error');
+                // Mixed Content hatası olabilir, tekrar dene
+                setTimeout(() => {
+                    const currentSrc = iframe.src;
+                    if (currentSrc && currentSrc.startsWith('http://')) {
+                        const httpsSrc = currentSrc.replace('http://', 'https://');
+                        console.warn('⚠️ Mixed Content hatası! HTTPS URL ile tekrar deniyor:', httpsSrc);
+                        iframe.src = httpsSrc;
+                    } else {
+                        alert('❌ İçerik yüklenirken hata oluştu!\n\nLütfen:\n1. Owlex sunucusuna giriş yaptığınızdan emin olun\n2. URL\'nin HTTPS ile başladığından emin olun (https://)\n3. Browser Console\'u açın (F12) ve Network tab\'inde cookie\'lerin gönderildiğini kontrol edin');
+                    }
+                }, 1000);
+            };
+            
+            // URL'yi ayarla (credentials ile)
+            // URL mutlaka HTTPS olmalı
+            if (!url.startsWith('https://')) {
+                url = url.replace('http://', 'https://');
+                console.warn('⚠️ URL HTTPS\'e çevrildi:', url);
+            }
+            
+            console.log('Setting iframe src to:', url);
+            iframe.src = url;
             document.getElementById('iframeContainer').style.display = 'block';
             document.getElementById('emptyState').style.display = 'none';
             updateIframeSize();
+        }
+        
+        function checkCookieSupport(url) {
+            try {
+                // URL'yi HTTPS'e çevir
+                if (url.startsWith('http://')) {
+                    url = url.replace('http://', 'https://');
+                }
+                
+                const urlObj = new URL(url);
+                const domain = urlObj.hostname;
+                
+                // Cookie kontrolü için fetch testi
+                fetch(url, {
+                    method: 'HEAD',
+                    credentials: 'include',
+                    mode: 'cors'
+                }).then(response => {
+                    console.log('Cookie test response status:', response.status);
+                    console.log('Response headers:', [...response.headers.entries()]);
+                    
+                    if (response.status === 302) {
+                        const location = response.headers.get('Location');
+                        console.warn('⚠️ 302 Redirect detected!');
+                        console.log('Redirect Location:', location);
+                        
+                        // Location header'ı HTTP ise HTTPS'e çevir
+                        if (location && location.startsWith('http://')) {
+                            console.warn('⚠️ Redirect Location HTTP! HTTPS\'e çevriliyor...');
+                            const httpsLocation = location.replace('http://', 'https://');
+                            console.log('HTTPS Location:', httpsLocation);
+                        }
+                        
+                        if (location && (location.includes('/login') || location.includes('/home'))) {
+                            console.error('❌ Cookie gönderilmedi veya geçersiz!');
+                            console.log('ÇÖZÜM:');
+                            console.log('1. F12 > Network tab\'ini açın');
+                            console.log('2. Request Headers\'da Cookie header\'ının olup olmadığını kontrol edin');
+                            console.log('3. Eğer Cookie header YOKSA → Owlex\'e giriş yapın');
+                            console.log('4. Eğer Cookie header VARSA → Cookie geçersiz, tekrar giriş yapın');
+                        }
+                    } else if (response.status === 200) {
+                        console.log('✅ Cookie çalışıyor!');
+                    }
+                }).catch(error => {
+                    // Mixed Content hatası ignore edilir
+                    if (error.message.includes('Mixed Content') || error.message.includes('insecure')) {
+                        console.warn('⚠️ Mixed Content hatası (normal):', error.message);
+                        console.warn('Iframe içinde HTTP redirect olursa otomatik HTTPS\'e çevrilecek');
+                    } else {
+                        console.error('Cookie test error:', error);
+                    }
+                });
+            } catch (e) {
+                console.log('Cookie test setup error:', e.message);
+            }
         }
 
         function updateIframeSize() {
@@ -525,8 +832,73 @@
             document.getElementById('viewerTitle').textContent = 'İçerik Burada Görünecek';
         }
 
-        // Enter tuşu ile yükleme
+        // Session cookie input alanına yapıştırma ve yazma sırasında boşlukları temizle
+        function cleanSessionCookieInput(input) {
+            const cursorPos = input.selectionStart;
+            const oldValue = input.value;
+            const newValue = oldValue.replace(/\s+/g, '');
+            
+            if (oldValue !== newValue) {
+                input.value = newValue;
+                // Cursor pozisyonunu koru (boşluklar silindiği için ayarlanmalı)
+                const removedChars = oldValue.length - newValue.length;
+                const newCursorPos = Math.max(0, cursorPos - removedChars);
+                input.setSelectionRange(newCursorPos, newCursorPos);
+            }
+        }
+
+        // Sayfa yüklendiğinde localStorage'dan cookie'yi kontrol et
         document.addEventListener('DOMContentLoaded', function() {
+            const savedSession = localStorage.getItem('superset_session');
+            if (savedSession) {
+                document.getElementById('sessionCookie').value = savedSession;
+                console.log('Saved session cookie loaded from localStorage');
+            }
+            
+            // Session cookie input alanına event listener'lar ekle
+            const sessionCookieInput = document.getElementById('sessionCookie');
+            if (sessionCookieInput) {
+                // Yapıştırma sırasında boşlukları temizle
+                sessionCookieInput.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                    const cleanedText = pastedText.replace(/\s+/g, '');
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const currentValue = this.value;
+                    this.value = currentValue.substring(0, start) + cleanedText + currentValue.substring(end);
+                    const newCursorPos = start + cleanedText.length;
+                    this.setSelectionRange(newCursorPos, newCursorPos);
+                    // Input event'i de tetiklenir, ama manuel temizleme yapıyoruz
+                });
+                
+                // Yazma sırasında boşlukları temizle
+                sessionCookieInput.addEventListener('input', function() {
+                    cleanSessionCookieInput(this);
+                });
+                
+                // Boşluk tuşuna basıldığında engelle
+                sessionCookieInput.addEventListener('keydown', function(e) {
+                    if (e.key === ' ' || e.key === 'Tab') {
+                        e.preventDefault();
+                    }
+                });
+            }
+            
+            const urlInput = document.getElementById('supersetUrl');
+            if (urlInput) {
+                urlInput.addEventListener('blur', function() {
+                    let url = this.value.trim();
+                    if (url) {
+                        if (url.startsWith('http://')) {
+                            this.value = url.replace('http://', 'https://');
+                        } else if (!url.startsWith('https://') && !url.startsWith('http://')) {
+                            this.value = 'https://' + url;
+                        }
+                    }
+                });
+            }
+
             const inputs = document.querySelectorAll('input');
             inputs.forEach(input => {
                 input.addEventListener('keypress', function(e) {
@@ -544,3 +916,4 @@
     </script>
 </body>
 </html>
+
