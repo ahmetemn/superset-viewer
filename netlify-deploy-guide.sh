@@ -1,0 +1,22 @@
+#!/bin/bash
+
+echo "🚀 Netlify Manuel Deploy Rehberi"
+echo "=================================="
+echo ""
+echo "Dosyalar hazır! Şimdi Netlify'a yükleyin:"
+echo ""
+echo "1. https://app.netlify.com/drop adresine gidin"
+echo "2. Şu dosyayı sürükle-bırak yapın:"
+echo "   - index.html"
+echo ""
+echo "VEYA"
+echo ""
+echo "Netlify Dashboard'dan:"
+echo "1. https://app.netlify.com/ adresine gidin"
+echo "2. Site'nizi seçin (owlex)"
+echo "3. 'Deploys' sekmesine gidin"
+echo "4. 'Trigger deploy' > 'Deploy site' butonuna tıklayın"
+echo ""
+echo "✅ Deployment sonrası:"
+echo "   https://owlex.netlify.app adresinde yeni versiyon görünecek"
+

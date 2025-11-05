@@ -299,26 +299,47 @@
                 <strong>📋 Session Cookie Kontrolü (ÖNEMLİ!):</strong>
                 <ol>
                     <li><strong>ÖNCE</strong> Superset sunucusuna giriş yapın: <code>https://devowlex.experilabs.online</code></li>
+                    <li><strong>Ana sayfaya gidin:</strong> <code>https://devowlex.experilabs.online/home/</code></li>
                     <li><strong>F12</strong> tuşuna basın (Developer Tools)</li>
                     <li><strong>Application</strong> sekmesine gidin</li>
-                    <li>Sol menüden <strong>Cookies</strong> > <strong>https://devowlex.experilabs.online</strong> seçin ⚠️ (Netlify değil!)</li>
-                    <li><strong>session</strong> cookie'sinin olduğundan emin olun</li>
-                    <li>Cookie'nin <strong>SameSite: None</strong> ve <strong>Secure: ✓</strong> olduğunu kontrol edin</li>
+                    <li>Sol menüden <strong>Cookies</strong> > <strong>https://devowlex.experilabs.online</strong> seçin</li>
+                    <li><strong>session</strong> cookie'sini kontrol edin:
+                        <ul>
+                            <li>✅ Name: <code>session</code></li>
+                            <li>✅ Secure: ✓ (işaretli olmalı)</li>
+                            <li>✅ HttpOnly: ✓ (işaretli olmalı)</li>
+                            <li>⚠️ <strong>SameSite: None</strong> olmalı (en önemli!)</li>
+                        </ul>
+                    </li>
                 </ol>
                 <br>
-                <strong>⚠️ ÖNEMLİ - Cookie Domain Hatası:</strong>
+                <strong>⚠️ ÖNEMLİ - Cookie Domain Kontrolü:</strong>
                 <ul>
-                    <li>❌ <strong>YANLIŞ:</strong> Cookie <code>owlex.netlify.app</code> domain'inde (Netlify domain'i)</li>
-                    <li>✅ <strong>DOĞRU:</strong> Cookie <code>devowlex.experilabs.online</code> domain'inde (Superset domain'i) olmalı!</li>
-                    <li>Iframe içinde Superset'e istek gönderilirken cookie <strong>Superset domain'inden</strong> gönderilir</li>
-                    <li>Cookie yoksa veya yanlış domain'deyse 302 redirect hatası alırsınız</li>
+                    <li>Cookie <code>devowlex.experilabs.online</code> domain'inde olmalı ✅</li>
+                    <li>Cookie'nin <strong>SameSite=None</strong> olması kritik!</li>
+                    <li>Eğer SameSite=Lax veya Strict ise → Cross-origin iframe'de çalışmaz</li>
+                    <li>Cookie gönderilmesi için: <code>SameSite=None; Secure</code> olmalı</li>
                 </ul>
+                <br>
+                <strong>🔍 302 Redirect Hatası İçin Network Tab Kontrolü:</strong>
+                <ol>
+                    <li>F12 > <strong>Network</strong> tab'ini açın</li>
+                    <li>Dashboard URL'ini yükleyin</li>
+                    <li>302 request'ini bulun</li>
+                    <li><strong>Request Headers</strong> sekmesine gidin</li>
+                    <li><strong>Cookie:</strong> header'ını kontrol edin:
+                        <ul>
+                            <li>❌ <strong>YOKSA</strong> → Cookie gönderilmiyor (SameSite sorunu olabilir)</li>
+                            <li>✅ <strong>VARSA</strong> → Cookie gönderiliyor ama geçersiz/expire olmuş</li>
+                        </ul>
+                    </li>
+                </ol>
                 <br>
                 <strong>✅ Çözüm:</strong>
                 <ol>
                     <li>Yeni sekmede <strong>https://devowlex.experilabs.online</strong> açın</li>
-                    <li>Normal şekilde <strong>giriş yapın</strong> (cookie otomatik oluşur)</li>
-                    <li>F12 > Application > Cookies > <strong>https://devowlex.experilabs.online</strong> kontrol edin</li>
+                    <li><strong>Giriş yapın</strong> ve <strong>ana sayfaya gidin</strong> (cookie otomatik oluşur)</li>
+                    <li>Cookie'nin <strong>SameSite=None</strong> olduğunu kontrol edin</li>
                     <li>Bu Netlify sayfasına geri dönün ve tekrar deneyin</li>
                     <li>Cookie otomatik olarak iframe içinde gönderilecektir</li>
                 </ol>
@@ -598,10 +619,9 @@
             const savedDomain = localStorage.getItem('superset_domain');
             
             if (savedSession) {
-                console.log('Saved session cookie found in localStorage');
-                // Cookie'yi URL'ye ekle (Superset bunu destekliyorsa)
-                // Not: Bu çalışmayabilir çünkü Superset cookie'yi header'dan bekler
-                // Ancak bazı durumlarda URL parametresi olarak da çalışabilir
+                console.log('Saved session cookie found in localStorage:', savedSession.substring(0, 50) + '...');
+            } else {
+                console.warn('⚠️ No session cookie in localStorage!');
             }
             
             // Cookie gönderimini test et
@@ -621,11 +641,35 @@
                             if (currentUrl.includes('/login') || currentUrl.includes('/auth')) {
                                 console.warn('302 Redirect detected - Authentication required');
                                 
-                                if (savedSession) {
-                                    alert('⚠️ Oturum Gerekli!\n\nCookie localStorage\'da var ama iframe\'e gönderilmiyor.\n\nÇözüm:\n1. Yeni sekmede Superset sunucusunu açın: ' + url.split('/superset')[0] + '\n2. Giriş yapın (cookie otomatik oluşur)\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nCookie\'ler otomatik olarak gönderilecektir.');
-                                } else {
-                                    alert('⚠️ Oturum Gerekli!\n\nSuperset sunucusuna giriş yapmanız gerekiyor.\n\n1. Yeni bir sekmede Superset sunucusunu açın: ' + url.split('/superset')[0] + '\n2. Giriş yapın\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nVEYA\n\nSession cookie\'sini manuel olarak girin (yukarıdaki alan).');
-                                }
+                                // Detaylı hata mesajı
+                                const errorMsg = `
+⚠️ 302 REDIRECT HATASI
+
+Cookie gönderilmiyor veya geçersiz!
+
+KONTROL ADIMLARI:
+1. F12 > Network tab'ini açın
+2. Dashboard request'ini bulun (302 olan)
+3. Request Headers sekmesine gidin
+4. "Cookie:" header'ının olup olmadığını kontrol edin
+
+EĞER COOKIE HEADER YOKSA:
+→ Cookie gönderilmiyor demektir
+→ Superset'e normal şekilde giriş yapın
+→ Cookie otomatik oluşur ve iframe'e gönderilir
+
+EĞER COOKIE HEADER VARSA:
+→ Cookie gönderiliyor ama geçersiz/expire olmuş
+→ Superset'e tekrar giriş yapın
+→ Yeni cookie oluşacaktır
+
+ÇÖZÜM:
+1. Yeni sekmede: ${url.split('/superset')[0]}
+2. Giriş yapın
+3. Bu sayfaya geri dönün ve tekrar deneyin
+                                `;
+                                
+                                alert(errorMsg);
                             }
                         } catch (e) {
                             // Cross-origin hatası normaldir
