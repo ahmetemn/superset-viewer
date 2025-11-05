@@ -373,6 +373,8 @@
         <div class="viewer-container">
             <div class="viewer-header">
                 <h2 id="viewerTitle">İçerik Burada Görünecek</h2>
+               
+
                 <div class="size-controls">
                     <label>Genişlik:</label>
                     <input type="number" id="iframeWidth" value="100" onchange="updateIframeSize()">%
@@ -486,7 +488,8 @@
                 }
                 url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
             } else if (chartId) {
-                url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1&height=800`;
+                // Doğru format: /main/explore/?slice_id={id}&standalone=1
+                url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1`;
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
                 return;
