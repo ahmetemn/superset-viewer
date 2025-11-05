@@ -484,9 +484,9 @@
                 if (shortId.includes('/r/')) {
                     shortId = shortId.split('/r/')[1];
                 }
-                url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
+                url = `${baseUrl}/?r=${shortId}&standalone=2&height=800`;
             } else if (chartId) {
-                url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1&height=800`;
+                url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=2&height=800`;
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
                 return;
@@ -507,13 +507,13 @@
             }
 
             // URL'yi oluştur ve console'da göster
-            const url = `${baseUrl}/main/dashboard/${dashboardId}/?standalone=1&native_filters=%28%29`;
+            const url = `${baseUrl}/main/dashboard/${dashboardId}/?standalone=2&native_filters=%28%29`;
             console.log('🔗 Dashboard URL:', url);
             console.log('📋 URL Format Kontrolü:');
             console.log('  - Base URL:', baseUrl);
             console.log('  - Path: /main/dashboard/');
             console.log('  - Dashboard ID:', dashboardId);
-            console.log('  - Parameters: standalone=1&native_filters=%28%29');
+            console.log('  - Parameters: standalone=2&native_filters=%28%29');
             
             // Cookie kontrolü
             console.log('🍪 Cookie Kontrolü:');
