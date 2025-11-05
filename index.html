@@ -488,13 +488,47 @@
                 }
                 url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
             } else if (chartId) {
-                // Doğru format: /main/explore/?form_data={...}&slice_id={id}
-                // Form_data parametresi gerekiyor, bu yüzden chart detail endpoint'ini kullan
-                // Chart detail sayfası form_data'yı otomatik oluşturur ve explore sayfasına yönlendirir
-                url = `${baseUrl}/superset/chart/${chartId}/?standalone=1`;
-                
-                // Alternatif: Eğer form_data'yı manuel oluşturmak gerekiyorsa (karmaşık)
-                // url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1`;
+                // Chart'ı direkt embed etmek için chart API'sinden form_data'yı al
+                try {
+                    console.log('📡 Chart API\'den form_data alınıyor...');
+                    const chartApiUrl = `${baseUrl}/api/v1/chart/${chartId}`;
+                    
+                    const response = await fetch(chartApiUrl, {
+                        method: 'GET',
+                        credentials: 'include',
+                        mode: 'cors',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const chartData = await response.json();
+                        console.log('✅ Chart data alındı:', chartData);
+                        
+                        // Form_data'yı oluştur
+                        if (chartData.result && chartData.result.form_data) {
+                            const formData = chartData.result.form_data;
+                            const formDataEncoded = encodeURIComponent(JSON.stringify(formData));
+                            
+                            // Explore sayfasına yönlendir
+                            url = `${baseUrl}/main/explore/?form_data=${formDataEncoded}&slice_id=${chartId}&standalone=1`;
+                            console.log('✅ Chart URL oluşturuldu:', url);
+                        } else {
+                            // Form_data yoksa slice_id ile dene
+                            console.warn('⚠️ Form_data bulunamadı, slice_id ile deniyor...');
+                            url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1`;
+                        }
+                    } else {
+                        console.warn('⚠️ Chart API\'den veri alınamadı, chart detail endpoint\'ini kullanıyoruz...');
+                        // API çalışmazsa chart detail endpoint'ini kullan
+                        url = `${baseUrl}/superset/chart/${chartId}/?standalone=1`;
+                    }
+                } catch (error) {
+                    console.error('❌ Chart API hatası:', error);
+                    // Hata durumunda chart detail endpoint'ini kullan
+                    url = `${baseUrl}/superset/chart/${chartId}/?standalone=1`;
+                }
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
                 return;
