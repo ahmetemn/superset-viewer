@@ -456,8 +456,8 @@
             return url;
         }
 
-        // Cookie durumunu kontrol et
-        async function checkCookieStatus() {
+        // Cookie durumunu kontrol et (devre dışı - Mixed Content hatası önlemek için)
+        function checkCookieStatus() {
             const baseUrl = getOwlexUrl();
             if (!baseUrl) return;
 
@@ -475,101 +475,19 @@
                 return;
             }
 
-            try {
-                // Cookie kontrolü için bir test endpoint'i deneyelim
-                const testUrl = `${baseUrl}/home/`;
-                
-                // URL'nin HTTPS olduğundan emin ol
-                if (!testUrl.startsWith('https://')) {
-                    console.error('❌ Mixed Content hatası önlemek için URL HTTPS olmalı:', testUrl);
-                    return;
-                }
-                
-                // Fetch ile cookie gönderimini test et
-                const response = await fetch(testUrl, {
-                    method: 'HEAD',
-                    credentials: 'include',
-                    mode: 'cors',
-                    redirect: 'manual'
-                });
-
-                console.log('Cookie test response:', response.status, response.type);
-
-                if (response.status === 0 || response.type === 'opaque') {
-                    // CORS hatası - cookie gönderilemiyor
-                    statusBox.style.display = 'block';
-                    statusBox.className = 'warning-box';
-                    statusText.innerHTML = `
-                        <strong>❌ Cookie Gönderilemiyor!</strong><br>
-                        Cross-origin cookie gönderimi çalışmıyor.<br><br>
-                        <strong>ÇÖZÜM:</strong><br>
-                        1. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3;">Owlex'e giriş yapın</a><br>
-                        2. Cookie otomatik olarak Owlex domain'inde oluşur<br>
-                        3. Bu sayfaya geri dönün ve tekrar deneyin<br>
-                        4. Cookie artık Owlex domain'inde olduğu için iframe içinde otomatik gönderilir
-                    `;
-                } else if (response.status === 200) {
-                    // Cookie çalışıyor
-                    statusBox.style.display = 'block';
-                    statusBox.className = 'success-box';
-                    statusText.innerHTML = `
-                        <strong>✅ Cookie Durumu İyi!</strong><br>
-                        Cookie gönderimi çalışıyor gibi görünüyor.
-                    `;
-                } else if (response.status === 302 || response.status === 301) {
-                    // Redirect - cookie yok veya geçersiz
-                    const location = response.headers.get('Location') || '';
-                    
-                    // Location header'ı HTTP ise HTTPS'e çevir
-                    if (location && location.startsWith('http://')) {
-                        console.warn('⚠️ Redirect Location HTTP! HTTPS\'e çevriliyor...');
-                        const httpsLocation = location.replace('http://', 'https://');
-                        console.log('HTTPS Location:', httpsLocation);
-                    }
-                    
-                    statusBox.style.display = 'block';
-                    statusBox.className = 'warning-box';
-                    statusText.innerHTML = `
-                        <strong>⚠️ 302 Redirect - Cookie Sorunu!</strong><br>
-                        Cookie gönderilmiyor veya geçersiz.<br><br>
-                        <strong>ÇÖZÜM:</strong><br>
-                        1. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3;">Owlex'e giriş yapın</a><br>
-                        2. Cookie otomatik olarak Owlex domain'inde oluşur<br>
-                        3. Bu sayfaya geri dönün ve tekrar deneyin<br>
-                        4. Iframe içinde cookie otomatik gönderilir
-                    `;
-                }
-            } catch (error) {
-                console.error('Cookie check error:', error);
-                
-                // Mixed Content hatası kontrolü
-                if (error.message && (error.message.includes('Mixed Content') || error.message.includes('insecure'))) {
-                    statusBox.style.display = 'block';
-                    statusBox.className = 'warning-box';
-                    statusText.innerHTML = `
-                        <strong>⚠️ Mixed Content Hatası!</strong><br>
-                        Owlex backend'i HTTP redirect döndürüyor olabilir.<br><br>
-                        <strong>ÇÖZÜM:</strong><br>
-                        1. Owlex config'de <code>SUPERSET_WEBSERVER_PROTOCOL = "https"</code> olmalı<br>
-                        2. Nginx config'inde X-Frame-Options header'ı kaldırılmalı veya değiştirilmeli<br>
-                        3. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3;">Owlex'e giriş yapın</a><br>
-                        4. Cookie artık Owlex domain'inde olduğu için iframe içinde otomatik gönderilir
-                    `;
-                } else {
-                    // CORS hatası beklenir
-                    statusBox.style.display = 'block';
-                    statusBox.className = 'warning-box';
-                    statusText.innerHTML = `
-                        <strong>⚠️ Cross-Origin Cookie Sorunu!</strong><br>
-                        Farklı domain'lerden cookie gönderimi tarayıcı güvenlik politikaları nedeniyle çalışmaz.<br><br>
-                        <strong>ÇÖZÜM:</strong><br>
-                        1. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3;">Owlex'e giriş yapın</a><br>
-                        2. Cookie otomatik olarak Owlex domain'inde oluşur<br>
-                        3. Bu sayfaya geri dönün ve tekrar deneyin<br>
-                        4. Cookie artık Owlex domain'inde olduğu için iframe içinde otomatik gönderilir
-                    `;
-                }
-            }
+            // Cookie kontrolü devre dışı - Mixed Content hatası önlemek için
+            // Eğer cookie kontrolü yapmak isterseniz, Owlex'e giriş yapın ve iframe içinde cookie otomatik gönderilir
+            statusBox.style.display = 'block';
+            statusBox.className = 'info-box';
+            statusText.innerHTML = `
+                <strong>💡 Cookie Bilgisi:</strong><br>
+                Cookie kontrolü devre dışı (Mixed Content hatası önlemek için).<br><br>
+                <strong>ÇÖZÜM:</strong><br>
+                1. Yeni sekmede <a href="${baseUrl}" target="_blank" style="color: #2196F3;">Owlex'e giriş yapın</a><br>
+                2. Cookie otomatik olarak Owlex domain'inde oluşur<br>
+                3. Bu sayfaya geri dönün ve Chart/Dashboard yükleyin<br>
+                4. Cookie artık Owlex domain'inde olduğu için iframe içinde otomatik gönderilir
+            `;
         }
 
         function loadChartStandalone() {
@@ -588,7 +506,7 @@
                 }
                 url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
             } else if (chartId) {
-                url = `${baseUrl}/superset/explore/?slice_id=${chartId}&standalone=1&height=800`;
+                url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1&height=800`;
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
                 return;
@@ -608,7 +526,7 @@
                 return;
             }
 
-            const url = `${baseUrl}/superset/dashboard/${dashboardId}/?standalone=1`;
+            const url = `${baseUrl}/main/dashboard/${dashboardId}/?standalone=1&native_filters=%28%29`;
             showContent(url, `Dashboard ${dashboardId}`);
         }
 

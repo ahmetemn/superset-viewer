@@ -423,7 +423,9 @@
         }
 
         function setSessionCookie() {
-            const sessionValue = document.getElementById('sessionCookie').value.trim();
+            // Tüm boşlukları temizle (space, tab, newline, vb.)
+            let sessionValue = document.getElementById('sessionCookie').value.replace(/\s+/g, '');
+            sessionValue = sessionValue.trim();
             if (!sessionValue) {
                 alert('Lütfen session cookie değerini girin!');
                 return;
@@ -482,9 +484,9 @@
                 if (shortId.includes('/r/')) {
                     shortId = shortId.split('/r/')[1];
                 }
-                url = `${baseUrl}/?r=${shortId}&standalone=1&embedded=true&height=800`;
+                url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
             } else if (chartId) {
-                url = `${baseUrl}/superset/explore/?slice_id=${chartId}&standalone=1&embedded=true&height=800`;
+                url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1&height=800`;
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
                 return;
@@ -504,7 +506,7 @@
                 return;
             }
 
-            const url = `${baseUrl}/superset/dashboard/${dashboardId}/?standalone=1&embedded=true`;
+            const url = `${baseUrl}/main/dashboard/${dashboardId}/?standalone=1&native_filters=%28%29`;
             showContent(url, `Dashboard ${dashboardId}`);
         }
 
@@ -748,12 +750,57 @@ EĞER COOKIE HEADER VARSA:
             document.getElementById('viewerTitle').textContent = 'İçerik Burada Görünecek';
         }
 
+        // Session cookie input alanına yapıştırma ve yazma sırasında boşlukları temizle
+        function cleanSessionCookieInput(input) {
+            const cursorPos = input.selectionStart;
+            const oldValue = input.value;
+            const newValue = oldValue.replace(/\s+/g, '');
+            
+            if (oldValue !== newValue) {
+                input.value = newValue;
+                // Cursor pozisyonunu koru (boşluklar silindiği için ayarlanmalı)
+                const removedChars = oldValue.length - newValue.length;
+                const newCursorPos = Math.max(0, cursorPos - removedChars);
+                input.setSelectionRange(newCursorPos, newCursorPos);
+            }
+        }
+
         // Sayfa yüklendiğinde localStorage'dan cookie'yi kontrol et
         document.addEventListener('DOMContentLoaded', function() {
             const savedSession = localStorage.getItem('superset_session');
             if (savedSession) {
                 document.getElementById('sessionCookie').value = savedSession;
                 console.log('Saved session cookie loaded from localStorage');
+            }
+            
+            // Session cookie input alanına event listener'lar ekle
+            const sessionCookieInput = document.getElementById('sessionCookie');
+            if (sessionCookieInput) {
+                // Yapıştırma sırasında boşlukları temizle
+                sessionCookieInput.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                    const cleanedText = pastedText.replace(/\s+/g, '');
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const currentValue = this.value;
+                    this.value = currentValue.substring(0, start) + cleanedText + currentValue.substring(end);
+                    const newCursorPos = start + cleanedText.length;
+                    this.setSelectionRange(newCursorPos, newCursorPos);
+                    // Input event'i de tetiklenir, ama manuel temizleme yapıyoruz
+                });
+                
+                // Yazma sırasında boşlukları temizle
+                sessionCookieInput.addEventListener('input', function() {
+                    cleanSessionCookieInput(this);
+                });
+                
+                // Boşluk tuşuna basıldığında engelle
+                sessionCookieInput.addEventListener('keydown', function(e) {
+                    if (e.key === ' ' || e.key === 'Tab') {
+                        e.preventDefault();
+                    }
+                });
             }
             
             const urlInput = document.getElementById('supersetUrl');
