@@ -472,7 +472,7 @@
             return url;
         }
 
-        function loadChartStandalone() {
+        async function loadChartStandalone() {
             const baseUrl = getOwlexUrl();
             if (!baseUrl) return;
 
@@ -488,8 +488,14 @@
                 }
                 url = `${baseUrl}/?r=${shortId}&standalone=1&height=800`;
             } else if (chartId) {
-                // Doğru format: /main/explore/?slice_id={id}&standalone=1
+                // Doğru format: /main/explore/?form_data={...}&slice_id={id}
+                // Owlex backend'i slice_id parametresini aldığında form_data'yı otomatik oluşturur
+                // Standalone mod için slice_id parametresi yeterli olmalı
                 url = `${baseUrl}/main/explore/?slice_id=${chartId}&standalone=1`;
+                
+                // Eğer form_data gerekiyorsa, chart detail sayfasına yönlendir
+                // Owlex backend'i chart detail sayfasından form_data'yı otomatik oluşturur
+                // url = `${baseUrl}/superset/chart/${chartId}/`;
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
                 return;
