@@ -584,13 +584,38 @@
             
             // Iframe load event listener - hata kontrolü için
             iframe.onload = function() {
-                console.log('Iframe loaded successfully');
+                console.log('✅ Iframe loaded successfully');
+                console.log('📋 Response Header Kontrolü:');
+                console.log('⚠️ ÖNEMLİ: Network tab\'inde Response Headers\'ı kontrol edin!');
+                console.log('❌ Eğer şunlar varsa → Backend\'de düzeltilmeli:');
+                console.log('   x-frame-options: ALLOWALL');
+                console.log('   x-frame-options: SAMEORIGIN');
+                console.log('   → Bu çelişkili header\'lar iframe\'i engelleyebilir!');
+                console.log('✅ ÇÖZÜM: Backend config\'de sadece biri olmalı:');
+                console.log('   OVERRIDE_HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}');
+                console.log('   veya Nginx config\'inde X-Frame-Options header\'ını kaldırın');
+                
                 try {
                     // Cross-origin kontrolü için timeout kullan
                     setTimeout(() => {
                         try {
                             const currentUrl = iframe.contentWindow.location.href;
                             console.log('Iframe current URL:', currentUrl);
+                            
+                            // İçerik kontrolü
+                            try {
+                                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                                const bodyContent = iframeDoc.body ? iframeDoc.body.innerHTML.length : 0;
+                                console.log('Iframe içerik uzunluğu:', bodyContent, 'karakter');
+                                
+                                if (bodyContent === 0 || bodyContent < 100) {
+                                    console.warn('⚠️ Iframe içeriği boş görünüyor!');
+                                    console.warn('Bu X-Frame-Options çelişkisinden kaynaklanıyor olabilir.');
+                                    console.warn('Network tab > Response Headers > x-frame-options kontrol edin.');
+                                }
+                            } catch (e) {
+                                console.log('Cross-origin content check (normal):', e.message);
+                            }
                             
                             // HTTP URL kontrolü - EN ÖNEMLİSİ!
                             if (currentUrl.startsWith('http://')) {
