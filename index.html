@@ -525,30 +525,45 @@
                 return;
             }
             
-            // Önce /home endpoint'ine istek atarak session cookie'sini al
+            // Önce /home endpoint'ini iframe içinde yükle (session cookie için)
+            // Fetch Mixed Content hatasına yol açıyor, bu yüzden iframe kullanıyoruz
             const homeUrl = `${baseUrl}/home/`;
-            console.log('📡 /home endpoint\'ine istek atılıyor (session cookie için)...');
+            console.log('📡 /home endpoint\'i iframe içinde yükleniyor (session cookie için)...');
             
-            fetch(homeUrl, {
-                method: 'GET',
-                credentials: 'include',
-                mode: 'cors'
-            }).then(response => {
-                console.log('✅ /home response status:', response.status);
-                
-                // Cookie header'larını kontrol et
-                const setCookieHeader = response.headers.get('Set-Cookie');
-                if (setCookieHeader) {
-                    console.log('🍪 Set-Cookie header:', setCookieHeader);
-                }
+            // İlk olarak /home'u yükle, sonra dashboard'u yükle
+            let homeLoaded = false;
+            
+            // /home'u gizli bir iframe'de yükle
+            const hiddenIframe = document.createElement('iframe');
+            hiddenIframe.style.display = 'none';
+            hiddenIframe.style.width = '1px';
+            hiddenIframe.style.height = '1px';
+            hiddenIframe.src = homeUrl;
+            document.body.appendChild(hiddenIframe);
+            
+            hiddenIframe.onload = function() {
+                console.log('✅ /home endpoint yüklendi');
+                homeLoaded = true;
                 
                 // Şimdi dashboard URL'ini yükle
-                loadIframeWithUrl(url, title, iframe);
-            }).catch(error => {
-                console.warn('⚠️ /home request failed (normal olabilir):', error.message);
+                setTimeout(() => {
+                    loadIframeWithUrl(url, title, iframe);
+                }, 500);
+            };
+            
+            hiddenIframe.onerror = function() {
+                console.warn('⚠️ /home request failed, dashboard yükleniyor...');
                 // Hata olsa bile dashboard URL'ini yükle
                 loadIframeWithUrl(url, title, iframe);
-            });
+            };
+            
+            // Timeout: 3 saniye içinde /home yüklenmezse dashboard'u yükle
+            setTimeout(() => {
+                if (!homeLoaded) {
+                    console.warn('⚠️ /home timeout, dashboard yükleniyor...');
+                    loadIframeWithUrl(url, title, iframe);
+                }
+            }, 3000);
         }
         
         function loadIframeWithUrl(url, title, iframe) {
