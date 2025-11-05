@@ -300,45 +300,7 @@
                
                 
                 
-         
-                <br>
-                <strong>🔍 302 Redirect Sorunu - Debug Adımları:</strong>
-                <ol>
-                    <li><strong>Network Tab Kontrolü (EN ÖNEMLİSİ):</strong>
-                        <ul>
-                            <li>F12 > Network tab'ini açın</li>
-                            <li>Dashboard URL'ini yükleyin</li>
-                            <li>İlk 302 request'i bulun</li>
-                            <li><strong>Request Headers</strong> sekmesine gidin</li>
-                            <li><strong>Cookie:</strong> header'ının olup olmadığını kontrol edin</li>
-                            <li>❌ Eğer <strong>Cookie:</strong> header'ı yoksa → Cookie gönderilmiyor demektir</li>
-                            <li>✅ Eğer <strong>Cookie:</strong> header'ı varsa → Cookie gönderiliyor ama geçersiz/expire olmuş olabilir</li>
-                        </ul>
-                    </li>
-                    <li><strong>Cookie Kontrolü:</strong>
-                        <ul>
-                            <li>F12 > Application > Cookies > <strong>https://devowlex.experilabs.online</strong></li>
-                            <li><strong>session</strong> cookie'sinin olduğundan emin olun</li>
-                            <li><strong>SameSite:</strong> <code>None</code> olmalı</li>
-                            <li><strong>Secure:</strong> ✓ işaretli olmalı</li>
-                            <li><strong>Expires:</strong> Geçerli bir tarih olmalı (expire olmamış)</li>
-                        </ul>
-                    </li>
-                    <li><strong>Owlex Config Kontrolü:</strong>
-                        <ul>
-                            <li>Config'de <code>SESSION_COOKIE_SAMESITE = "None"</code> olduğundan emin olun</li>
-                            <li>Config'de <code>SESSION_COOKIE_SECURE = True</code> olduğundan emin olun</li>
-                        </ul>
-                    </li>
-                    <li><strong>Browser Console Kontrolü:</strong>
-                        <ul>
-                            <li>F12 > Console tab'ini açın</li>
-                            <li>Dashboard yüklerken console loglarını kontrol edin</li>
-                            <li>"Cookie test response status" mesajını kontrol edin</li>
-                        </ul>
-                    </li>
-                </ol>
-                <br>
+
                 <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez! Cookie Owlex domain'inde olmalıdır.
             </div>
 

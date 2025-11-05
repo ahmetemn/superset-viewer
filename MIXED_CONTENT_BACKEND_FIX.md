@@ -1,26 +1,95 @@
-# Mixed Content Hatası - Owlex Backend Çözümü
+# Mixed Content Hatası - Owlex Config Düzeltmesi
 
-## Sorun
+## 🔴 SORUN: Config'de HTTP protokolü ayarlanmış
 
-Mixed Content hatası devam ediyor çünkü **Owlex backend'i HTTP redirect döndürüyor**.
-
-Frontend'de tam çözüm mümkün değil çünkü tarayıcı güvenlik politikaları Mixed Content'i engelliyor.
-
-## Çözüm: Owlex Backend'de Düzeltme
-
-Owlex config dosyanızda şunu kontrol edin:
+Config dosyanızda şu satır Mixed Content hatasına yol açıyor:
 
 ```python
-# Owlex config'de
-SUPERSET_WEBSERVER_PROTOCOL = "https"  # HTTP yerine HTTPS
+SUPERSET_WEBSERVER_PROTOCOL = "http"  # ❌ YANLIŞ! (Satır ~200)
+```
 
-# Veya environment variable olarak
+## ✅ ÇÖZÜM: HTTPS'e çevirin
+
+Config dosyanızda şu değişikliği yapın:
+
+```python
+# HTTP yerine HTTPS kullan
+SUPERSET_WEBSERVER_PROTOCOL = "https"  # ✅ DOĞRU
+```
+
+Veya environment variable olarak:
+
+```python
 SUPERSET_WEBSERVER_PROTOCOL = os.environ.get("SUPERSET_PROTOCOL", "https")
 ```
 
-## Proxy/Load Balancer Seviyesinde Çözüm
+## 🔧 X-Frame-Options Düzeltmesi
 
-Eğer Owlex bir proxy/load balancer (nginx, Apache, etc.) arkasındaysa:
+Config dosyanızda şu satır var:
+
+```python
+OVERRIDE_HTTP_HEADERS = {
+    "X-Frame-Options": "ALLOWALL"  # ❌ Geçersiz değer!
+}
+```
+
+`ALLOWALL` geçerli bir değer değil. Şunlardan birini kullanın:
+
+```python
+# Seçenek 1: X-Frame-Options'ı tamamen kaldır (önerilen)
+OVERRIDE_HTTP_HEADERS = {}
+
+# Seçenek 2: Content-Security-Policy ile kontrol et (en modern yöntem)
+OVERRIDE_HTTP_HEADERS = {
+    "Content-Security-Policy": "frame-ancestors *;"
+}
+```
+
+## ✅ Diğer Ayarlar (Zaten Doğru)
+
+Config dosyanızda şu ayarlar zaten doğru:
+
+✅ `SESSION_COOKIE_SAMESITE = "None"` - Cross-origin cookie için gerekli
+✅ `SESSION_COOKIE_SECURE = True` - HTTPS için gerekli
+✅ `ENABLE_CORS = True` - CORS için gerekli
+✅ `CORS_OPTIONS` - `supports_credentials: True` var
+✅ `ALLOW_DASHBOARD_DOMAIN_SHARING: True` - Feature flag'de var
+
+## 📝 Yapılacaklar
+
+### 1. Config Dosyasında Değişiklik
+
+Config dosyanızda şu iki değişikliği yapın:
+
+```python
+# Değişiklik 1: HTTP'den HTTPS'e çevir
+SUPERSET_WEBSERVER_PROTOCOL = "https"  # "http" yerine "https"
+
+# Değişiklik 2: X-Frame-Options'ı düzelt
+OVERRIDE_HTTP_HEADERS = {
+    "Content-Security-Policy": "frame-ancestors *;"
+}
+```
+
+### 2. Owlex'i Yeniden Başlatın
+
+```bash
+# Docker kullanıyorsanız
+docker-compose restart
+
+# Veya servis olarak çalışıyorsa
+systemctl restart owlex
+```
+
+### 3. Test Edin
+
+1. Owlex'e giriş yapın
+2. Dashboard'u yükleyin
+3. Mixed Content hatası çözülmüş olmalı
+
+## 🔍 Proxy/Load Balancer Kontrolü
+
+Eğer Owlex bir proxy/load balancer (nginx, Apache, etc.) arkasındaysa, proxy seviyesinde de HTTPS yönlendirmesi yapın:
 
 ### Nginx Örneği:
 
@@ -47,24 +116,15 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Proto $scheme;  # ✅ ÖNEMLİ!
     }
 }
 ```
 
-## Frontend'de Yapılanlar
+## ✅ Sonuç
 
-Frontend'de şunlar yapıldı:
-1. ✅ URL'ler otomatik HTTPS'e çevriliyor
-2. ✅ Iframe onload event'inde HTTP URL kontrolü yapılıyor
-3. ✅ HTTP URL algılandığında HTTPS'e çevriliyor
-4. ✅ Mixed Content hataları için error handling eklendi
-
-**Ancak bu yeterli değil** çünkü tarayıcı iframe içinde HTTP URL yüklenmesini engelliyor.
-
-## Sonuç
-
-**Kalıcı çözüm:** Owlex backend'inde redirect'in HTTPS olmasını sağlamak.
-
-Frontend'de yapılanlar kısmi çözüm sağlar ama tam çözüm için backend düzeltmesi gereklidir.
-
+Bu değişikliklerden sonra:
+- ✅ Owlex HTTPS redirect döndürecek
+- ✅ Mixed Content hatası çözülecek
+- ✅ Iframe embed çalışacak
+- ✅ Cross-origin cookie'ler çalışacak
