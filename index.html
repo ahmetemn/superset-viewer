@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Superset Viewer</title>
+    <title>Owlex Viewer</title>
     <style>
         * {
             margin: 0;
@@ -290,7 +290,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Superset Viewer</h1>
+            <h1>📊 Owlex Viewer</h1>
             <p>Chart ve Dashboard'ları iframe içinde görüntüleyin</p>
         </div>
 
@@ -298,7 +298,7 @@
             <div class="info-box">
                 <strong>📋 Session Cookie Kontrolü (ÖNEMLİ!):</strong>
                 <ol>
-                    <li><strong>ÖNCE</strong> Superset sunucusuna giriş yapın: <code>https://devowlex.experilabs.online</code></li>
+                    <li><strong>ÖNCE</strong> Owlex sunucusuna giriş yapın: <code>https://devowlex.experilabs.online</code></li>
                     <li><strong>Ana sayfaya gidin:</strong> <code>https://devowlex.experilabs.online/home/</code></li>
                     <li><strong>F12</strong> tuşuna basın (Developer Tools)</li>
                     <li><strong>Application</strong> sekmesine gidin</li>
@@ -315,24 +315,24 @@
                 <br>
                 <strong>⚠️ ÖNEMLİ - Cookie Domain Sorunu:</strong>
                 <ul>
-                    <li>❌ <strong>localStorage'daki cookie çalışmaz!</strong> Cookie Superset domain'inde olmalı</li>
-                    <li>✅ <strong>Cookie'nin Superset domain'inde olması gerekir:</strong> <code>https://devowlex.experilabs.online</code></li>
-                    <li>Iframe içinde Superset'e istek gönderilirken cookie <strong>Superset domain'inden</strong> gönderilir</li>
-                    <li>localStorage'daki cookie Superset domain'ine gönderilmez!</li>
+                    <li>❌ <strong>localStorage'daki cookie çalışmaz!</strong> Cookie Owlex domain'inde olmalı</li>
+                    <li>✅ <strong>Cookie'nin Owlex domain'inde olması gerekir:</strong> <code>https://devowlex.experilabs.online</code></li>
+                    <li>Iframe içinde Owlex'e istek gönderilirken cookie <strong>Owlex domain'inden</strong> gönderilir</li>
+                    <li>localStorage'daki cookie Owlex domain'ine gönderilmez!</li>
                 </ul>
                 <br>
                 <strong>✅ ÇÖZÜM (Tek Yol):</strong>
                 <ol>
                     <li>Yeni sekmede <strong>https://devowlex.experilabs.online</strong> açın</li>
                     <li><strong>Normal şekilde giriş yapın</strong></li>
-                    <li>Cookie <strong>otomatik olarak Superset domain'inde</strong> oluşur</li>
+                    <li>Cookie <strong>otomatik olarak Owlex domain'inde</strong> oluşur</li>
                     <li>Bu Netlify sayfasına geri dönün</li>
                     <li>Dashboard yükleyin → Cookie otomatik gönderilir ✅</li>
                 </ol>
                 <br>
                 <strong>❌ ÇALIŞMAYAN YÖNTEMLER:</strong>
                 <ul>
-                    <li>Manuel cookie girişi → localStorage'a kaydedilir ama Superset domain'inde değil</li>
+                    <li>Manuel cookie girişi → localStorage'a kaydedilir ama Owlex domain'inde değil</li>
                     <li>Cross-origin cookie ayarlama → Tarayıcı güvenlik politikaları nedeniyle çalışmaz</li>
                 </ul>
                 <br>
@@ -359,7 +359,7 @@
                     <li>Cookie otomatik olarak iframe içinde gönderilecektir</li>
                 </ol>
                 <br>
-                <strong>🔧 Superset Config Kontrolü (Config Dosyanızda Mevcut ✅):</strong>
+                <strong>🔧 Owlex Config Kontrolü (Config Dosyanızda Mevcut ✅):</strong>
                 <ul>
                     <li>✅ <code>OVERRIDE_HTTP_HEADERS = {"X-Frame-Options": "ALLOWALL"}</code></li>
                     <li>✅ <code>SESSION_COOKIE_SAMESITE = "None"</code></li>
@@ -390,7 +390,7 @@
                             <li><strong>Expires:</strong> Geçerli bir tarih olmalı (expire olmamış)</li>
                         </ul>
                     </li>
-                    <li><strong>Superset Config Kontrolü:</strong>
+                    <li><strong>Owlex Config Kontrolü:</strong>
                         <ul>
                             <li>Config'de <code>SESSION_COOKIE_SAMESITE = "None"</code> olduğundan emin olun</li>
                             <li>Config'de <code>SESSION_COOKIE_SECURE = True</code> olduğundan emin olun</li>
@@ -405,15 +405,15 @@
                     </li>
                 </ol>
                 <br>
-                <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez!
+                <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez! Cookie Owlex domain'inde olmalıdır.
             </div>
 
             <div class="control-group">
-                <label for="supersetUrl">Superset Sunucu URL</label>
+                <label for="supersetUrl">Owlex Sunucu URL</label>
                 <input 
                     type="text" 
                     id="supersetUrl" 
-                    placeholder="https://your-superset-instance.com"
+                    placeholder="https://devowlex.experilabs.online"
                     value="https://devowlex.experilabs.online"
                 >
             </div>
@@ -428,7 +428,7 @@
                 >
                 <button class="btn btn-secondary" onclick="setSessionCookie()" style="margin-top: 10px; width: auto; padding: 8px 20px;">Cookie'yi Ayarla</button>
                 <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 0.85em;">
-                    F12 > Application > Cookies > https://devowlex.experilabs.online > session cookie'sinin Value değerini kopyalayıp buraya yapıştırın
+                    F12 > Application > Cookies > https://devowlex.experilabs.online > session cookie'sinin Value değerini kopyalayıp buraya yapıştırın (Not: localStorage cookie çalışmaz, Owlex'e giriş yapın)
                 </small>
             </div>
 
@@ -533,9 +533,9 @@
                 return;
             }
 
-            const baseUrl = getSupersetUrl();
+            const baseUrl = getOwlexUrl();
             if (!baseUrl) {
-                alert('Lütfen önce Superset sunucu URL\'sini girin!');
+                alert('Lütfen önce Owlex sunucu URL\'sini girin!');
                 return;
             }
 
@@ -549,18 +549,18 @@
                 localStorage.setItem('superset_domain', domain);
 
                 // UYARI: Cross-origin cookie ayarlama tarayıcı güvenlik politikaları nedeniyle çalışmaz!
-                // Cookie'nin Superset domain'inde olması gerekir
-                alert('⚠️ ÖNEMLİ!\n\nCookie localStorage\'a kaydedildi ancak cross-origin cookie ayarlama çalışmaz!\n\nÇÖZÜM:\n1. Yeni sekmede Superset\'e giriş yapın: ' + baseUrl + '\n2. Cookie otomatik olarak Superset domain\'inde oluşur\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nCookie\'ler otomatik olarak iframe\'e gönderilecektir.');
+                // Cookie'nin Owlex domain'inde olması gerekir
+                alert('⚠️ ÖNEMLİ!\n\nCookie localStorage\'a kaydedildi ancak cross-origin cookie ayarlama çalışmaz!\n\nÇÖZÜM:\n1. Yeni sekmede Owlex\'e giriş yapın: ' + baseUrl + '\n2. Cookie otomatik olarak Owlex domain\'inde oluşur\n3. Bu sayfaya geri dönün ve tekrar deneyin\n\nCookie\'ler otomatik olarak iframe\'e gönderilecektir.');
             } catch (error) {
                 console.error('Cookie ayarlama hatası:', error);
                 alert('❌ Cookie ayarlanırken hata oluştu.');
             }
         }
 
-        function getSupersetUrl() {
+        function getOwlexUrl() {
             let url = document.getElementById('supersetUrl').value.trim();
             if (!url) {
-                alert('Lütfen Superset sunucu URL\'sini girin!');
+                alert('Lütfen Owlex sunucu URL\'sini girin!');
                 return null;
             }
             if (url.startsWith('http://')) {
@@ -573,7 +573,7 @@
         }
 
         function loadChartStandalone() {
-            const baseUrl = getSupersetUrl();
+            const baseUrl = getOwlexUrl();
             if (!baseUrl) return;
 
             const chartId = document.getElementById('chartId').value.trim();
@@ -598,7 +598,7 @@
         }
 
         function loadDashboardStandalone() {
-            const baseUrl = getSupersetUrl();
+            const baseUrl = getOwlexUrl();
             if (!baseUrl) return;
 
             const dashboardId = document.getElementById('dashboardId').value.trim();
@@ -681,17 +681,17 @@
             
             if (savedSession) {
                 console.log('Saved session cookie found in localStorage:', savedSession.substring(0, 50) + '...');
-                console.warn('⚠️ UYARI: localStorage\'daki cookie Superset domain\'inde değil!');
-                console.warn('Cookie\'nin Superset domain\'inde olması gerekir: https://devowlex.experilabs.online');
-                console.warn('ÇÖZÜM: Superset\'e normal şekilde giriş yapın, cookie otomatik oluşur.');
+                console.warn('⚠️ UYARI: localStorage\'daki cookie Owlex domain\'inde değil!');
+                console.warn('Cookie\'nin Owlex domain\'inde olması gerekir: https://devowlex.experilabs.online');
+                console.warn('ÇÖZÜM: Owlex\'e normal şekilde giriş yapın, cookie otomatik oluşur.');
             } else {
                 console.warn('⚠️ No session cookie in localStorage!');
-                console.warn('ÇÖZÜM: Superset\'e giriş yapın veya cookie\'yi manuel olarak girin.');
+                console.warn('ÇÖZÜM: Owlex\'e giriş yapın veya cookie\'yi manuel olarak girin.');
             }
             
-            // Gerçek cookie kontrolü (Superset domain'inde)
+            // Gerçek cookie kontrolü (Owlex domain'inde)
             console.log('Current domain cookies:', document.cookie);
-            console.log('Superset domain cookie kontrolü için:');
+            console.log('Owlex domain cookie kontrolü için:');
             console.log('1. F12 > Application > Cookies > https://devowlex.experilabs.online');
             console.log('2. session cookie\'sinin olduğundan emin olun');
             
@@ -735,12 +735,12 @@ KONTROL ADIMLARI:
 
 EĞER COOKIE HEADER YOKSA:
 → Cookie gönderilmiyor demektir
-→ Superset'e normal şekilde giriş yapın
+→ Owlex'e normal şekilde giriş yapın
 → Cookie otomatik oluşur ve iframe'e gönderilir
 
 EĞER COOKIE HEADER VARSA:
 → Cookie gönderiliyor ama geçersiz/expire olmuş
-→ Superset'e tekrar giriş yapın
+→ Owlex'e tekrar giriş yapın
 → Yeni cookie oluşacaktır
 
 ÇÖZÜM:
@@ -763,7 +763,7 @@ EĞER COOKIE HEADER VARSA:
             
             iframe.onerror = function() {
                 console.error('Iframe load error');
-                alert('❌ İçerik yüklenirken hata oluştu!\n\nLütfen:\n1. Superset sunucusuna giriş yaptığınızdan emin olun\n2. URL\'nin HTTPS ile başladığından emin olun (https://)\n3. Browser Console\'u açın (F12) ve Network tab\'inde cookie\'lerin gönderildiğini kontrol edin');
+                alert('❌ İçerik yüklenirken hata oluştu!\n\nLütfen:\n1. Owlex sunucusuna giriş yaptığınızdan emin olun\n2. URL\'nin HTTPS ile başladığından emin olun (https://)\n3. Browser Console\'u açın (F12) ve Network tab\'inde cookie\'lerin gönderildiğini kontrol edin');
             };
             
             // URL'yi ayarla (credentials ile)
@@ -809,7 +809,7 @@ EĞER COOKIE HEADER VARSA:
                             console.log('ÇÖZÜM:');
                             console.log('1. F12 > Network tab\'ini açın');
                             console.log('2. Request Headers\'da Cookie header\'ının olup olmadığını kontrol edin');
-                            console.log('3. Eğer Cookie header YOKSA → Superset\'e giriş yapın');
+                            console.log('3. Eğer Cookie header YOKSA → Owlex\'e giriş yapın');
                             console.log('4. Eğer Cookie header VARSA → Cookie geçersiz, tekrar giriş yapın');
                         }
                     } else if (response.status === 200) {
@@ -819,7 +819,7 @@ EĞER COOKIE HEADER VARSA:
                     console.error('Cookie test error:', error);
                     if (error.message.includes('Mixed Content') || error.message.includes('insecure')) {
                         console.error('❌ Mixed Content Hatası! URL HTTPS olmalı:', url);
-                        console.error('ÇÖZÜM: Superset URL\'i HTTPS ile başlamalı: https://devowlex.experilabs.online');
+                        console.error('ÇÖZÜM: Owlex URL\'i HTTPS ile başlamalı: https://devowlex.experilabs.online');
                     }
                 });
             } catch (e) {
