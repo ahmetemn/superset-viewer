@@ -1,42 +1,64 @@
-# Netlify Deployment - Hızlı Çözüm
+# Netlify Deploy Rehberi
 
-## 🚀 Netlify ile Deployment (2 Dakika)
+## ✅ Otomatik Deploy (Önerilen)
 
-GitHub Pages sorun yaşıyorsa, Netlify kullanın - daha kolay ve hızlı!
+Netlify GitHub repo'nuzu izliyorsa, her push'ta otomatik deploy yapar:
 
-### Adımlar:
+1. **Değişiklikleri GitHub'a push edin:**
+   ```bash
+   git add .
+   git commit -m "Update for Netlify"
+   git push
+   ```
 
-1. **Netlify'a Git:**
-   - https://www.netlify.com/ adresine gidin
-   - "Sign up" ile ücretsiz hesap oluşturun (GitHub ile giriş yapabilirsiniz)
+2. **Netlify otomatik deploy yapacak (1-2 dakika)**
 
-2. **Deploy:**
-   - Dashboard'da "Add new site" butonuna tıklayın
-   - "Deploy manually" seçin
-   - **Veya** "Import from Git" ile GitHub repository'nizi bağlayın
+3. **Deploy durumunu kontrol edin:**
+   - Netlify Dashboard: https://app.netlify.com/sites/owlex/deploys
+   - Live Site: https://owlex.netlify.app/
 
-3. **Manuel Deploy (En Kolay):**
-   - Tüm dosyaları seçin (index.html, owlex_embed_viewer.html, superset_embed_viewer.html)
-   - Sürükle-bırak yapın
-   - ✅ Hazır! HTTPS otomatik aktif
+## 🚀 Manuel Deploy Script
 
-4. **GitHub ile Deploy:**
-   - "Import from Git" seçin
-   - GitHub'ı bağlayın ve `ahmetemn/superset-viewer` seçin
-   - Deploy ayarları otomatik algılanacak
-   - "Deploy site" butonuna tıklayın
+Hızlı deploy için script kullanın:
 
-### 🎯 Avantajlar:
+```bash
+./deploy-netlify.sh
+```
 
-- ✅ Anında çalışır (GitHub Pages'ten daha hızlı)
-- ✅ Private repository'lerde de çalışır
-- ✅ Otomatik HTTPS
-- ✅ Her push'ta otomatik deploy
-- ✅ Özel domain ekleyebilirsiniz
+## 📋 Netlify Ayarları
 
-### 📱 URL:
+### Build Settings:
+- **Build command:** (boş - static site)
+- **Publish directory:** `.` (root)
 
-Deployment sonrası şu formatta bir URL alacaksınız:
-- `https://rastgele-isim-123.netlify.app`
-- Ayarlardan özel domain ekleyebilirsiniz
+### Environment Variables:
+Gerekirse Netlify dashboard'dan ekleyin:
+- `NODE_VERSION` (opsiyonel)
 
+### Custom Domain:
+Netlify dashboard > Site settings > Domain management'dan özel domain ekleyebilirsiniz.
+
+## 🔍 Deploy Kontrolü
+
+Deploy sonrası kontrol edin:
+
+1. ✅ Site yükleniyor mu: https://owlex.netlify.app/
+2. ✅ Console'da hata var mı: F12 > Console
+3. ✅ Mixed Content hatası var mı: Network tab'inde kontrol edin
+
+## 🐛 Sorun Giderme
+
+### Deploy başarısız olursa:
+1. Netlify dashboard'dan build loglarını kontrol edin
+2. `netlify.toml` dosyasını kontrol edin
+3. GitHub repo'nun public olduğundan emin olun
+
+### Site güncellenmiyorsa:
+1. Netlify dashboard > Deploys > "Trigger deploy" > "Clear cache and deploy site"
+2. Browser cache'i temizleyin (Ctrl+Shift+R)
+
+## 📝 Notlar
+
+- Netlify otomatik olarak HTTPS sağlar
+- Her push otomatik deploy tetikler
+- Build logları Netlify dashboard'da görülebilir
