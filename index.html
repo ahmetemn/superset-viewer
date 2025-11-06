@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #607896 0%, #4a5f7a 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -28,7 +28,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #607896 0%, #4a5f7a 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             text-align: center;
@@ -75,8 +75,8 @@
         .control-group input:focus,
         .control-group select:focus {
             outline: none;
-            border-color: #607896;
-            box-shadow: 0 0 0 3px rgba(96, 120, 150, 0.1);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .button-group {
@@ -98,13 +98,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #607896 0%, #4a5f7a 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(96, 120, 150, 0.4);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn-secondary {
@@ -251,12 +251,12 @@
         }
 
         .tab:hover {
-            color: #607896;
+            color: #667eea;
         }
 
         .tab.active {
-            color: #607896;
-            border-bottom-color: #607896;
+            color: #667eea;
+            border-bottom-color: #667eea;
         }
 
         .tab-content {
@@ -338,14 +338,25 @@
                         placeholder="Örn: 5"
                     >
                 </div>
-                <div class="button-group" style="justify-content: flex-end;">
-                    <button class="btn btn-primary" onclick="loadDashboardStandalone()" style="width: 25%; min-width: 150px;">Dashboard Yükle</button>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="loadDashboardStandalone()">Dashboard Yükle</button>
                 </div>
             </div>
         </div>
 
         <div class="viewer-container">
+            <div class="viewer-header">
+                <h2 id="viewerTitle">İçerik Burada Görünecek</h2>
+               
 
+                <div class="size-controls">
+                    <label>Genişlik:</label>
+                    <input type="number" id="iframeWidth" value="100" onchange="updateIframeSize()">%
+                    <label>Yükseklik:</label>
+                    <input type="number" id="iframeHeight" value="800" onchange="updateIframeSize()">px
+                    <button class="btn btn-danger" onclick="clearViewer()" style="padding: 8px 20px; min-width: auto;">Temizle</button>
+                </div>
+            </div>
 
             <div id="iframeContainer" class="iframe-container" style="display: none;">
                 <iframe 
@@ -364,7 +375,7 @@
                     <line x1="15" y1="9" x2="9" y2="15"></line>
                 </svg>
                 <h3>Henüz içerik yüklenmedi</h3>
-                <p>Yukarıdaki formu doldurarak Dashboard yükleyin</p>
+                <p>Yukarıdaki formu doldurarak  Dashboard yükleyin</p>
             </div>
         </div>
     </div>
