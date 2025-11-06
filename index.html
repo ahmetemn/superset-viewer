@@ -290,12 +290,19 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1> Owlex Viewer</h1>
-            <p> Dashboard'larınızı iframe içinde görüntüleyin</p>
+            <h1>📊 Owlex Viewer</h1>
+            <p>Chart ve Dashboard'ları iframe içinde görüntüleyin</p>
         </div>
 
         <div class="controls">
-          
+            <div class="info-box">
+                
+               
+                
+                
+
+                <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez! Cookie Owlex domain'inde olmalıdır.
+            </div>
 
             <div class="control-group">
                 <label for="supersetUrl">Owlex Sunucu URL</label>
@@ -307,14 +314,26 @@
                 >
             </div>
 
-   
-
-            <div class="tabs">
-                <!-- <button class="tab" onclick="switchTab('chart')">📈 Chart</button> -->
-                <button class="tab active" onclick="switchTab('dashboard')"> Dashboard</button>
+            <div class="control-group">
+                <label for="sessionCookie">Session Cookie (Manuel Giriş)</label>
+                <input 
+                    type="text" 
+                    id="sessionCookie" 
+                    placeholder="Session cookie değerini buraya yapıştırın..."
+                    style="font-family: monospace; font-size: 0.9em;"
+                >
+                <button class="btn btn-secondary" onclick="setSessionCookie()" style="margin-top: 10px; width: auto; padding: 8px 20px;">Cookie'yi Ayarla</button>
+                <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 0.85em;">
+                    F12 > Application > Cookies > https://devowlex.experilabs.online > session cookie'sinin Value değerini kopyalayıp buraya yapıştırın (Not: localStorage cookie çalışmaz, Owlex'e giriş yapın)
+                </small>
             </div>
 
-            <div id="chartTab" class="tab-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('chart')">📈 Chart</button>
+                <button class="tab" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            </div>
+
+            <div id="chartTab" class="tab-content active">
                 <div class="control-group">
                     <label for="chartId">Chart ID</label>
                     <input 
@@ -323,13 +342,20 @@
                         placeholder="Örn: 123"
                     >
                 </div>
-  
-                <!-- <div class="button-group">
+                <div class="control-group">
+                    <label for="chartShortUrl">Veya Chart Short URL ID (r parametresi)</label>
+                    <input 
+                        type="text" 
+                        id="chartShortUrl" 
+                        placeholder="Örn: abc123 (veya /r/abc123 formatında)"
+                    >
+                </div>
+                <div class="button-group">
                     <button class="btn btn-primary" onclick="loadChartStandalone()">Chart Yükle</button>
-                </div> -->
+                </div>
             </div>
 
-            <div id="dashboardTab" class="tab-content active">
+            <div id="dashboardTab" class="tab-content">
                 <div class="control-group">
                     <label for="dashboardId">Dashboard ID</label>
                     <input 
@@ -375,7 +401,7 @@
                     <line x1="15" y1="9" x2="9" y2="15"></line>
                 </svg>
                 <h3>Henüz içerik yüklenmedi</h3>
-                <p>Yukarıdaki formu doldurarak  Dashboard yükleyin</p>
+                <p>Yukarıdaki formu doldurarak Chart veya Dashboard yükleyin</p>
             </div>
         </div>
     </div>
@@ -496,12 +522,12 @@
                     } else {
                         console.warn('⚠️ Chart API\'den veri alınamadı, chart detail endpoint\'ini kullanıyoruz...');
                         // API çalışmazsa chart detail endpoint'ini kullan
-                        url = `${baseUrl}/superset/chart/${chartId}/?standalone=2`;
+                        url = `${baseUrl}/superset/chart/${chartId}/?standalone=1`;
                     }
                 } catch (error) {
                     console.error('❌ Chart API hatası:', error);
                     // Hata durumunda chart detail endpoint'ini kullan
-                    url = `${baseUrl}/superset/chart/${chartId}/?standalone=2`;
+                    url = `${baseUrl}/superset/chart/${chartId}/?standalone=1`;
                 }
             } else {
                 alert('Lütfen Chart ID veya Chart Short URL ID girin!');
