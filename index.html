@@ -338,25 +338,14 @@
                         placeholder="Örn: 5"
                     >
                 </div>
-                <div class="button-group">
-                    <button class="btn btn-primary" onclick="loadDashboardStandalone()">Dashboard Yükle</button>
+                <div class="button-group" style="justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="loadDashboardStandalone()" style="width: 25%; min-width: 150px;">Dashboard Yükle</button>
                 </div>
             </div>
         </div>
 
         <div class="viewer-container">
-            <div class="viewer-header">
-                <h2 id="viewerTitle">İçerik Burada Görünecek</h2>
-               
 
-                <div class="size-controls">
-                    <label>Genişlik:</label>
-                    <input type="number" id="iframeWidth" value="100" onchange="updateIframeSize()">%
-                    <label>Yükseklik:</label>
-                    <input type="number" id="iframeHeight" value="800" onchange="updateIframeSize()">px
-                    <button class="btn btn-danger" onclick="clearViewer()" style="padding: 8px 20px; min-width: auto;">Temizle</button>
-                </div>
-            </div>
 
             <div id="iframeContainer" class="iframe-container" style="display: none;">
                 <iframe 
