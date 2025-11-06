@@ -295,13 +295,7 @@
         </div>
 
         <div class="controls">
-            <div class="info-box">
-                
-               
-                
-                
-
-            </div>
+          
 
             <div class="control-group">
                 <label for="supersetUrl">Owlex Sunucu URL</label>
@@ -313,13 +307,24 @@
                 >
             </div>
 
-     
-            <div class="tabs">
-                <!-- <button class="tab active" onclick="switchTab('chart')">📈 Chart</button> -->
-                <button class="tab" onclick="switchTab('dashboard')"> Dashboard</button>
+            <div class="control-group">
+                <label for="sessionCookie">Session Cookie (Manuel Giriş)</label>
+                <input 
+                    type="text" 
+                    id="sessionCookie" 
+                    placeholder="Session cookie değerini buraya yapıştırın..."
+                    style="font-family: monospace; font-size: 0.9em;"
+                >
+                <button class="btn btn-secondary" onclick="setSessionCookie()" style="margin-top: 10px; width: auto; padding: 8px 20px;">Cookie'yi Ayarla</button>
+               
             </div>
 
-            <div id="chartTab" class="tab-content active">
+            <div class="tabs">
+                <!-- <button class="tab" onclick="switchTab('chart')">📈 Chart</button> -->
+                <button class="tab active" onclick="switchTab('dashboard')"> Dashboard</button>
+            </div>
+
+            <div id="chartTab" class="tab-content">
                 <div class="control-group">
                     <label for="chartId">Chart ID</label>
                     <input 
@@ -334,7 +339,7 @@
                 </div> -->
             </div>
 
-            <div id="dashboardTab" class="tab-content">
+            <div id="dashboardTab" class="tab-content active">
                 <div class="control-group">
                     <label for="dashboardId">Dashboard ID</label>
                     <input 
