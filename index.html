@@ -290,8 +290,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Owlex Viewer</h1>
-            <p>Chart ve Dashboard'ları iframe içinde görüntüleyin</p>
+            <h1> Owlex Viewer</h1>
+            <p> Dashboard'larınızı iframe içinde görüntüleyin</p>
         </div>
 
         <div class="controls">
@@ -301,7 +301,6 @@
                 
                 
 
-                <strong>Not:</strong> Session cookie'si olmadan Chart/Dashboard görüntülenemez! Cookie Owlex domain'inde olmalıdır.
             </div>
 
             <div class="control-group">
@@ -323,9 +322,7 @@
                     style="font-family: monospace; font-size: 0.9em;"
                 >
                 <button class="btn btn-secondary" onclick="setSessionCookie()" style="margin-top: 10px; width: auto; padding: 8px 20px;">Cookie'yi Ayarla</button>
-                <small style="display: block; margin-top: 5px; color: #6c757d; font-size: 0.85em;">
-                    F12 > Application > Cookies > https://devowlex.experilabs.online > session cookie'sinin Value değerini kopyalayıp buraya yapıştırın (Not: localStorage cookie çalışmaz, Owlex'e giriş yapın)
-                </small>
+               
             </div>
 
             <div class="tabs">
@@ -342,17 +339,10 @@
                         placeholder="Örn: 123"
                     >
                 </div>
-                <div class="control-group">
-                    <label for="chartShortUrl">Veya Chart Short URL ID (r parametresi)</label>
-                    <input 
-                        type="text" 
-                        id="chartShortUrl" 
-                        placeholder="Örn: abc123 (veya /r/abc123 formatında)"
-                    >
-                </div>
-                <div class="button-group">
+  
+                <!-- <div class="button-group">
                     <button class="btn btn-primary" onclick="loadChartStandalone()">Chart Yükle</button>
-                </div>
+                </div> -->
             </div>
 
             <div id="dashboardTab" class="tab-content">
